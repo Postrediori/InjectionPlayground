@@ -11,6 +11,8 @@ bool InjectIntoProcessDll(DWORD processId, const std::wstring& dllPath, Injectio
         return InjectWithRemoteThread(processId, dllPath, UseCreateRemoteThread);
     case InjectionMethod::RtlCreateUserThread:
         return InjectWithRemoteThread(processId, dllPath, UseRtlCreateUserThread);
+    case InjectionMethod::NtCreateThreadEx:
+        return InjectWithRemoteThread(processId, dllPath, UseNtCreateThreadEx);
     case InjectionMethod::SetThreadContext:
         return InjectWithSetThreadContext(processId, dllPath);
     }

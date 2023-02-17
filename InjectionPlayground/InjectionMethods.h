@@ -3,6 +3,7 @@
 enum class InjectionMethod {
     CreateRemoteThread,
     RtlCreateUserThread,
+    NtCreateThreadEx,
     SetThreadContext
 };
 

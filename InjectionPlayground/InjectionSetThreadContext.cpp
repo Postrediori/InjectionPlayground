@@ -3,6 +3,7 @@
 #include "ProcUtils.h"
 #include "InjectionSetThreadContext.h"
 
+// TODO: x86 version and LoadLibraryExW version (e.g. winword uses it)
 BYTE codeToBeInjected[] = {
     // sub rsp, 28h
     0x48, 0x83, 0xec, 0x28,
@@ -33,10 +34,10 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
     const DWORD DesiredAccess = PROCESS_ALL_ACCESS;
     wil::unique_handle remoteProcessHandle(OpenProcess(DesiredAccess, FALSE, processId));
 
+    // THREAD_ALL_ACCESS is actually unnecessary
     const DWORD flags = THREAD_SET_CONTEXT | // For SetThreadContext
         THREAD_SUSPEND_RESUME | // For SuspendThread and ResumeThread
         THREAD_GET_CONTEXT;     // For GetThreadContext
-    //const DWORD flags = THREAD_ALL_ACCESS;
 
     wil::unique_handle remoteThreadHandle(OpenThread(flags,
         FALSE,                  // Don't inherit handles
@@ -80,9 +81,11 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
     }
 
     // Get address of LoadLibraryW function
-     FARPROC loadLibraryFunc = GetRemoteFunction(L"kernel32.dll", "LoadLibraryW");
+    FARPROC loadLibraryFunc = GetRemoteFunction(L"kernel32.dll", "LoadLibraryW");
 
-     // v2: getting address of actual imported function (requires another shellcode if only LoadLibraryExW is imported)
+    // v2 (doesn;t actually work): getting address of actual imported function
+    //   (requires another shellcode if only LoadLibraryExW is imported)
+    // TODO: fix this one
     //FARPROC loadLibraryFunc = NULL;
     //if (!GetRemoteFunctonInTargetProcessImportTable(processId, reinterpret_cast<PUINT_PTR>(&loadLibraryFunc),
     //        "Kernel32.dll", "LoadLibraryW")) {

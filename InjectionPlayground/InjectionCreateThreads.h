@@ -7,3 +7,5 @@ bool InjectWithRemoteThread(DWORD processId, const std::wstring& dllPath, Remote
 HANDLE UseCreateRemoteThread(HANDLE hProcess, LPTHREAD_START_ROUTINE pLoadLibrary, PVOID lpBaseAddress);
 
 HANDLE UseRtlCreateUserThread(HANDLE hProcess, LPTHREAD_START_ROUTINE pLoadLibrary, PVOID lpBaseAddress);
+
+HANDLE UseNtCreateThreadEx(HANDLE hProcess, LPTHREAD_START_ROUTINE pLoadLibrary, PVOID lpBaseAddress);

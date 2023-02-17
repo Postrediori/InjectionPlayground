@@ -31,7 +31,7 @@ std::vector<DWORD> GetProcessThreadIds(DWORD processId) {
         return {};
     }
 
-    const size_t BufferSize = 1024 * 1024; // 1mb
+    const size_t BufferSize = 1024 * 1024; // 1mb TODO: is it possible to use less memory(?)
     std::vector<BYTE> buffer(BufferSize);
 
     // In the QuerySystemInformation series of functions, when querying SystemProcessInformation, 

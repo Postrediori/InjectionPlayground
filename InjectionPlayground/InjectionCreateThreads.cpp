@@ -91,3 +91,34 @@ HANDLE UseRtlCreateUserThread(HANDLE hProcess, LPTHREAD_START_ROUTINE pLoadLibra
 
     return hRemoteThread;
 }
+
+HANDLE UseNtCreateThreadEx(HANDLE hProcess, LPTHREAD_START_ROUTINE pLoadLibrary, PVOID lpBaseAddress) {
+    using NtCreateThreadEx_t = NTSTATUS(NTAPI*)(
+        OUT PHANDLE hThread,
+        IN ACCESS_MASK DesiredAccess,
+        IN PVOID ObjectAttributes,
+        IN HANDLE ProcessHandle,
+        IN PVOID lpStartAddress,
+        IN PVOID lpParameter,
+        IN ULONG Flags,
+        IN SIZE_T StackZeroBits,
+        IN SIZE_T SizeOfStackCommit,
+        IN SIZE_T SizeOfStackReserve,
+        OUT PVOID lpBytesBuffer);
+
+    NtCreateThreadEx_t pNtCreateThreadEx = (NtCreateThreadEx_t)GetRemoteFunction(L"ntdll.dll", "NtCreateThreadEx");
+    if (pNtCreateThreadEx == NULL) {
+        return NULL;
+    }
+
+    HANDLE hRemoteThread = NULL;
+    NTSTATUS status = pNtCreateThreadEx(
+        &hRemoteThread, THREAD_ALL_ACCESS, NULL, hProcess,
+        pLoadLibrary, lpBaseAddress,
+        FALSE, NULL, NULL, NULL, NULL);
+    if (status != 0) {
+        return NULL;
+    }
+
+    return hRemoteThread;
+}

@@ -161,7 +161,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="InjectionCreateThreads.cpp" />
-    <ClCompile Include="InjectionCreateThreads.h" />
+    <ClInclude Include="InjectionCreateThreads.h" />
     <ClCompile Include="InjectionMethods.cpp" />
     <ClCompile Include="InjectionPlayground.cpp" />
     <ClCompile Include="InjectionSetThreadContext.cpp" />

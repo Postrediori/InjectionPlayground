@@ -27,9 +27,6 @@
     <ClCompile Include="Utils.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="InjectionCreateThreads.h">
-      <Filter>Header Files</Filter>
-    </ClCompile>
     <ClCompile Include="InjectionCreateThreads.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -57,6 +54,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Define.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InjectionCreateThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

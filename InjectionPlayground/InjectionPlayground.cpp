@@ -49,7 +49,8 @@ int wmain(int argc, const wchar_t* argv[]) {
         std::wcout << L"Injection methods:" << std::endl;
         std::wcout << L"  1 - CreateRemoteThread (default)" << std::endl;
         std::wcout << L"  2 - RtlCreateUserThread" << std::endl;
-        std::wcout << L"  3 - SetThreadContext" << std::endl;
+        std::wcout << L"  3 - NtCreateThreadEx" << std::endl;
+        std::wcout << L"  4 - SetThreadContext" << std::endl;
         return 1;
     }
 
@@ -66,6 +67,9 @@ int wmain(int argc, const wchar_t* argv[]) {
             method = InjectionMethod::RtlCreateUserThread;
             break;
         case 3:
+            method = InjectionMethod::NtCreateThreadEx;
+            break;
+        case 4:
             method = InjectionMethod::SetThreadContext;
             break;
         default:
