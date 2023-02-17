@@ -1,33 +1,8 @@
 #include "pch.h"
 #include "Utils.h"
 #include "ProcUtils.h"
+#include "Assembly.h"
 #include "InjectionSetThreadContext.h"
-
-// TODO: x86 version and LoadLibraryExW version (e.g. winword uses it)
-BYTE codeToBeInjected[] = {
-    // sub rsp, 28h
-    0x48, 0x83, 0xec, 0x28,
-    // mov [rsp + 18h], rax
-    0x48, 0x89, 0x44, 0x24, 0x18,
-    // mov [rsp + 10h], rcx
-    0x48, 0x89, 0x4c, 0x24, 0x10,
-    // mov rcx, 11111111111111111h; placeholder for DLL path
-    0x48, 0xb9, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11, 0x11,
-    // mov rax, 22222222222222222h; placeholder for “LoadLibraryW” address
-    0x48, 0xb8, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22, 0x22,
-    // call rax
-    0xff, 0xd0,
-    // mov rcx, [rsp + 10h]
-    0x48, 0x8b, 0x4c, 0x24, 0x10,
-    // mov rax, [rsp + 18h]
-    0x48, 0x8b, 0x44, 0x24, 0x18,
-    // add rsp, 28h
-    0x48, 0x83, 0xc4, 0x28,
-    // mov r11, 333333333333333333h; placeholder for the original RIP
-    0x49, 0xbb, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33, 0x33,
-    // jmp r11
-    0x41, 0xff, 0xe3
-};
 
 
 bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring& dllPath) {
@@ -81,30 +56,42 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
     }
 
     // Get address of LoadLibraryW function
+    // Note: AzureGreen's code uses GetLoadLibraryAddressInTargetProcessImportTable function
+    // to locate LoadLibraryA in the process import table itself. However, I didn't find
+    // the case where getting the pointer from kernel32 won't work. In addition,
+    // some processes use LoadLibraryEx function (e.g. winword) and it would
+    // require additional checks in addition to implementing another injection program with opcodes.
     FARPROC loadLibraryFunc = GetRemoteFunction(L"kernel32.dll", "LoadLibraryW");
 
-    // v2 (doesn;t actually work): getting address of actual imported function
-    //   (requires another shellcode if only LoadLibraryExW is imported)
-    // TODO: fix this one
-    //FARPROC loadLibraryFunc = NULL;
-    //if (!GetRemoteFunctonInTargetProcessImportTable(processId, reinterpret_cast<PUINT_PTR>(&loadLibraryFunc),
-    //        "Kernel32.dll", "LoadLibraryW")) {
-    //    LogError(L"GetRemoteFunctonInTargetProcessImportTable", false);
-    //    return false;
-    //}
-
-    // Set the DLL path
-    PVOID* dllPathAddr = reinterpret_cast<PVOID*>(codeToBeInjected + 0x10);
-    *dllPathAddr = static_cast<void*>(buffer + systemInformation.dwPageSize / 2);
-    // Set LoadLibraryW address
-    PVOID* loadLibraryAddr = reinterpret_cast<PVOID*>(codeToBeInjected + 0x1a);
-    *loadLibraryAddr = static_cast<void*>(loadLibraryFunc);
-    // Jump address (back to the original code)
-    DWORD64* jumpAddr = reinterpret_cast<DWORD64*>(codeToBeInjected + 0x34);
-    *jumpAddr = context.Rip;
+    using namespace IntegerTypes;
+    CpuProgram injectedCode = { // TODO: x86 injection assembly
+        // sub rsp, 28h
+        {0x48_8, 0x83_8, 0xec_8, 0x28_8},
+        // mov [rsp + 18h], rax
+        {0x48_8, 0x89_8, 0x44_8, 0x24_8, 0x18_8},
+        // mov [rsp + 10h], rcx
+        {0x48_8, 0x89_8, 0x4c_8, 0x24_8, 0x10_8},
+        // mov rcx, uint64_t pointer to DLL path
+        {0x48_8, 0xb9_8, reinterpret_cast<DWORD64>(buffer + systemInformation.dwPageSize / 2)},
+        // mov rax, uint64_t pointer to “LoadLibraryW” address
+        {0x48_8, 0xb8_8, reinterpret_cast<DWORD64>(loadLibraryFunc)},
+        // call rax
+        {0xff_8, 0xd0_8},
+        // mov rcx, [rsp + 10h]
+        {0x48_8, 0x8b_8, 0x4c_8, 0x24_8, 0x10_8},
+        // mov rax, [rsp + 18h]
+        {0x48_8, 0x8b_8, 0x44_8, 0x24_8, 0x18_8},
+        // add rsp, 28h
+        {0x48_8, 0x83_8, 0xc4_8, 0x28_8},
+        // mov r11, uint64_t pointer to the original RIP
+        {0x49_8, 0xbb_8, static_cast<DWORD64>(context.Rip)},
+        // jmp r11
+        {0x41_8, 0xff_8, 0xe3_8}
+    };
+    BinaryData data = ParseProgram(injectedCode);
 
     if (WriteProcessMemory(remoteProcessHandle.get(),
-        buffer, static_cast<LPCVOID>(codeToBeInjected), sizeof(codeToBeInjected), NULL) == 0) {
+        buffer, static_cast<LPCVOID>(data.data()), data.size(), NULL) == 0) {
         LogError(L"WriteProcessMemory", false);
         return false;
     }
