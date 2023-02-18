@@ -64,7 +64,8 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
     FARPROC loadLibraryFunc = GetRemoteFunction(L"kernel32.dll", "LoadLibraryW");
 
     using namespace IntegerTypes;
-    CpuProgram injectedCode = { // TODO: x86 injection assembly
+#ifdef _WIN64
+    CpuProgram injectedCode = {
         // sub rsp, 28h
         {0x48_8, 0x83_8, 0xec_8, 0x28_8},
         // mov [rsp + 18h], rax
@@ -88,6 +89,35 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
         // jmp r11
         {0x41_8, 0xff_8, 0xe3_8}
     };
+#else
+#  ifdef _WIN32
+    // Code by AzureGreen via https://github.com/AzureGreen/InjectCollection
+    CpuProgram injectedCode = {
+        // [0] pusha
+        {0x60_8},
+        // [1] pushf
+        {0x9c_8},
+        // [2] push uint32_t pointer to DLL path
+        {0x68_8, reinterpret_cast<DWORD>(buffer + systemInformation.dwPageSize / 2)},
+        // [7] call DWORD PTR [uint32_t pointer to “LoadLibraryW” address]
+        {0xff_8, 0x15_8, reinterpret_cast<DWORD>(buffer + 25)},
+        // [13] popf
+        {0x9d_8},
+        // [14] popa
+        {0x61_8},
+        // [15] jmp DWORD PTR [uint32_t pointer to the original EIP]
+        {0xff_8, 0x25_8, reinterpret_cast<DWORD>(buffer + 21)},
+
+        // The following are the actual addresses
+        // [21], pointer to the original EIP
+        {static_cast<DWORD>(context.Eip)},
+        // [25], pointer to “LoadLibraryW” address
+        {reinterpret_cast<DWORD>(loadLibraryFunc)}
+    };
+#  else
+#    error Unknown architecture
+#  endif
+#endif
     BinaryData data = ParseProgram(injectedCode);
 
     if (WriteProcessMemory(remoteProcessHandle.get(),
@@ -96,7 +126,15 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
         return false;
     }
 
+#ifdef _WIN64
     context.Rip = reinterpret_cast<DWORD64>(buffer);
+#else
+#  ifdef _WIN32
+    context.Eip = reinterpret_cast<DWORD>(buffer);
+#  else
+#    error Unknown architecture
+#  endif
+#endif
 
     if (!SetThreadContext(remoteThreadHandle.get(), &context)) {
         LogError(L"SetThreadContext", false);

@@ -2,7 +2,15 @@
 #include "Utils.h"
 #include "InjectionMethods.h"
 
-const std::filesystem::path DllName = L"InjectedDll.dll";
+#ifdef _WIN64
+const std::filesystem::path DllName = L"InjectedDll.x64.dll";
+#else
+#  ifdef _WIN32
+const std::filesystem::path DllName = L"InjectedDll.x86.dll";
+#  else
+#    error Unknown architecture
+#  endif
+#endif
 
 
 int InjectToProcessesByName(const std::wstring& processName, const std::filesystem::path& dllPath, InjectionMethod method) {

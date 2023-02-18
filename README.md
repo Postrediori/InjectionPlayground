@@ -2,11 +2,11 @@
 
 ## Description
 
-Collection of injection techniques using:
-* CreateRemoteThread
-* RtlCreateUserThread
-* NtCreateThreadEx
-* SetThreadContext (now only x64)
+This project contains a collection of several DLL injection mthods:
+* Creating remote thread in a target process (CreateRemoteThread, RtlCreateUserThread, NtCreateThreadEx)
+* Injection of shellcode with SetThreadContext
+
+The code is capable of injection into both x64 and x86 processes (platform-specific injection DLLs are also generated).
 
 Compiled using Visual Studio 2019 & C++17.
 
@@ -29,15 +29,12 @@ Injection methods:
 
 ## TODO
 
-* [ ] SetThreadContext & LoadLibraryExW injection (e.g. winword.exe). Requires updated shellcode
 * [ ] QueueUserApc
 * [ ] InjectDllByOEP
-* [ ] x86 injection (add build plan for DLL project).
-
 
 Really don't know whether the following is worth adding:
-* [ ] SetThreadContext for x86
 * [ ] SetWindowsHookEx
+* [ ] SetThreadContext & LoadLibraryExW injections. Requires updated shellcode
 * [ ] Reflective injection
 * [ ] Inject from driver in kernel space
 

@@ -44,12 +44,12 @@ bool InjectWithRemoteThread(DWORD processId, const std::wstring& dllPath, Remote
             break;
         }
 
-        DWORD waitingTime = 1000; // INFINITE
-        if (WaitForSingleObject(hRemoteThread.get(), waitingTime) == WAIT_FAILED) {
+// #define WAITING_TIME 1000 // INFINITE
+#ifdef WAITING_TIME
+        if (WaitForSingleObject(hRemoteThread.get(), WAITING_TIME) == WAIT_FAILED) {
             LogError(L"Remote Thread Wait Failed", false);
-            status = false;
-            break;
         }
+#endif
     } while (false);
 
     VirtualFreeEx(hProcess.get(), lpBaseAddress, 0, MEM_RELEASE);
