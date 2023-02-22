@@ -1,19 +1,40 @@
 #include "pch.h"
 
-void ShowGreeting() {
-    DWORD processId = GetCurrentProcessId();
-    DWORD threadId = GetCurrentThreadId();
+void WriteToLog(const std::wstring& log) {
+    const wchar_t LogPath[] = L"%UserProfile%\\Desktop\\log_file.txt";
 
-    WCHAR fileName[MAX_PATH] = { 0 };
-    if (!GetModuleFileNameW(NULL, fileName, MAX_PATH)) {
+    wchar_t cOutputPath[MAX_PATH];
+    ExpandEnvironmentStringsW(LogPath, cOutputPath, MAX_PATH);
+
+    std::wofstream logFile(cOutputPath, std::ios_base::out | std::ios_base::app);
+    if (!logFile) {
         return;
     }
 
-    std::filesystem::path path(fileName);
-    std::wstringstream s;
-    s << "Greetings from process='" << path.filename().wstring() << "' pid=" << processId << " tid=" << threadId;
+    logFile << log << std::endl;
+}
 
-    MessageBoxW(NULL, s.str().c_str(), L"Injected Code", MB_OK | MB_ICONEXCLAMATION);
+void ShowGreeting() {
+    try {
+        DWORD processId = GetCurrentProcessId();
+        DWORD threadId = GetCurrentThreadId();
+
+        WCHAR fileName[MAX_PATH] = { 0 };
+        if (!GetModuleFileNameW(NULL, fileName, MAX_PATH)) {
+            return;
+        }
+
+        std::filesystem::path path(fileName);
+        std::wstringstream s;
+        s << "Greetings from process='" << path.filename().wstring() << "' pid=" << processId << " tid=" << threadId;
+
+        MessageBoxW(NULL, s.str().c_str(), L"Injected Code", MB_OK | MB_ICONEXCLAMATION);
+
+        WriteToLog(s.str());
+    }
+    catch (const std::exception& ex) {
+        //
+    }
 }
 
 BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved) {

@@ -44,7 +44,7 @@ bool InjectWithRemoteThread(DWORD processId, const std::wstring& dllPath, Remote
             break;
         }
 
-// #define WAITING_TIME 1000 // INFINITE
+#define WAITING_TIME 100 // INFINITE
 #ifdef WAITING_TIME
         if (WaitForSingleObject(hRemoteThread.get(), WAITING_TIME) == WAIT_FAILED) {
             LogError(L"Remote Thread Wait Failed", false);

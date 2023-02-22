@@ -1,3 +1,5 @@
 Debug
 Release
+bin
 .vs
+*.vcxproj.user

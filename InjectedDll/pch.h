@@ -5,4 +5,5 @@
 #include <windows.h>
 
 #include <filesystem>
+#include <fstream>
 #include <sstream>
