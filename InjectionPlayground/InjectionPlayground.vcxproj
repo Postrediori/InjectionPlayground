@@ -179,8 +179,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Assembly.cpp" />
+    <ClCompile Include="InjectionByApc.cpp" />
     <ClCompile Include="InjectionCreateThreads.cpp" />
     <ClInclude Include="Assembly.h" />
+    <ClInclude Include="InjectionByApc.h" />
     <ClInclude Include="InjectionCreateThreads.h" />
     <ClCompile Include="InjectionMethods.cpp" />
     <ClCompile Include="InjectionPlayground.cpp" />

@@ -4,7 +4,8 @@ enum class InjectionMethod {
     CreateRemoteThread,
     RtlCreateUserThread,
     NtCreateThreadEx,
-    SetThreadContext
+    SetThreadContext,
+    QueueUserApc
 };
 
 bool InjectIntoProcessDll(DWORD processId, const std::wstring& dllPath, InjectionMethod method);

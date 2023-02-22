@@ -18,7 +18,7 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
         FALSE,                  // Don't inherit handles
         remoteThreadId));        // TID of our target thread
     if (!remoteThreadHandle) {
-        LogError(L"OpenThread", false);
+        LogError(L"OpenThread");
         return false;
     }
 
@@ -29,7 +29,7 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
     LPBYTE buffer = static_cast<LPBYTE>(VirtualAllocEx(remoteProcessHandle.get(), NULL, systemInformation.dwPageSize,
         MEM_COMMIT | MEM_RESERVE, PAGE_EXECUTE_READWRITE));
     if (!buffer) {
-        LogError(L"VirtualAllocEx", false);
+        LogError(L"VirtualAllocEx");
         return false;
     }
 
@@ -38,12 +38,12 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
 
     if (WriteProcessMemory(remoteProcessHandle.get(),
         buffer + systemInformation.dwPageSize / 2, dllPath.c_str(), libraryPathSizeBytes, NULL) == 0) {
-        LogError(L"WriteProcessMemory", false);
+        LogError(L"WriteProcessMemory");
         return false;
     }
 
     if (SuspendThread(remoteThreadHandle.get()) == (DWORD)(-1)) {
-        LogError(L"SuspendThread", false);
+        LogError(L"SuspendThread");
         return false;
     }
 
@@ -51,7 +51,7 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
     context.ContextFlags = CONTEXT_ALL;
 
     if (!GetThreadContext(remoteThreadHandle.get(), &context)) {
-        LogError(L"GetThreadContext", false);
+        LogError(L"GetThreadContext");
         return false;
     }
 
@@ -122,7 +122,7 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
 
     if (WriteProcessMemory(remoteProcessHandle.get(),
         buffer, static_cast<LPCVOID>(data.data()), data.size(), NULL) == 0) {
-        LogError(L"WriteProcessMemory", false);
+        LogError(L"WriteProcessMemory");
         return false;
     }
 
@@ -137,11 +137,11 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
 #endif
 
     if (!SetThreadContext(remoteThreadHandle.get(), &context)) {
-        LogError(L"SetThreadContext", false);
+        LogError(L"SetThreadContext");
     }
 
     if (ResumeThread(remoteThreadHandle.get()) == (DWORD)(-1)) {
-        LogError(L"ResumeThread", false);
+        LogError(L"ResumeThread");
     }
 
     // Don't need to execute VirtualFreeEx for buffer (?)
@@ -150,8 +150,8 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
 }
 
 bool InjectWithSetThreadContext(DWORD processId, const std::wstring& dllPath) {
-    std::vector<DWORD> threadIds = GetProcessThreadIds(processId);
-    if (threadIds.empty()) {
+    std::vector<DWORD> threadIds;
+    if (!GetProcessThreadIds(processId, threadIds)) {
         return false;
     }
 

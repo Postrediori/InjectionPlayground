@@ -12,13 +12,13 @@ bool InjectWithRemoteThread(DWORD processId, const std::wstring& dllPath, Remote
     const DWORD DesiredAccess = PROCESS_ALL_ACCESS;
     wil::unique_handle hProcess(OpenProcess(DesiredAccess, FALSE, processId));
     if (!hProcess) {
-        LogError(L"OpenProcess", false);
+        LogError(L"OpenProcess");
         return false;
     }
 
     LPVOID lpBaseAddress = VirtualAllocEx(hProcess.get(), NULL, dwDllNameSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
     if (lpBaseAddress == NULL) {
-        LogError(L"VirtualAllocEx", false);
+        LogError(L"VirtualAllocEx");
         return false;
     }
 
@@ -26,7 +26,7 @@ bool InjectWithRemoteThread(DWORD processId, const std::wstring& dllPath, Remote
 
     do {
         if (!WriteProcessMemory(hProcess.get(), lpBaseAddress, (LPCVOID)szDllFullPath, (SIZE_T)dwDllNameSize, NULL)) {
-            LogError(L"WriteProcessMemory", false);
+            LogError(L"WriteProcessMemory");
             status = false;
             break;
         }
@@ -39,7 +39,7 @@ bool InjectWithRemoteThread(DWORD processId, const std::wstring& dllPath, Remote
 
         wil::unique_handle hRemoteThread(remoteThreadFunc(hProcess.get(), (LPTHREAD_START_ROUTINE)pLoadLibrary, lpBaseAddress));
         if (!hRemoteThread) {
-            LogError(L"Remote Thread Returned NULL", false);
+            LogError(L"Remote Thread Returned NULL");
             status = false;
             break;
         }
@@ -47,7 +47,7 @@ bool InjectWithRemoteThread(DWORD processId, const std::wstring& dllPath, Remote
 #define WAITING_TIME 100 // INFINITE
 #ifdef WAITING_TIME
         if (WaitForSingleObject(hRemoteThread.get(), WAITING_TIME) == WAIT_FAILED) {
-            LogError(L"Remote Thread Wait Failed", false);
+            LogError(L"Remote Thread Wait Failed");
         }
 #endif
     } while (false);

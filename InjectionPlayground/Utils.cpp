@@ -14,7 +14,7 @@ std::wstring GetErrorDescription(DWORD dwErrorCode) {
     return s;
 }
 
-void LogError(const std::wstring& szFunctionName, bool newLine) {
+void LogError(const std::wstring& szFunctionName) {
     DWORD dwErrorCode = GetLastError();
     if (dwErrorCode == 0) {
         // No error
@@ -24,10 +24,11 @@ void LogError(const std::wstring& szFunctionName, bool newLine) {
     std::wcerr << L"ERROR function='" << szFunctionName <<
         L"' code=" << dwErrorCode <<
         L" decription='" << GetErrorDescription(dwErrorCode) << "'";
+}
 
-    if (newLine) {
-        std::wcerr << std::endl;
-    }
+void LogErrorLn(const std::wstring& szFunctionName) {
+    LogError(szFunctionName);
+    std::cout << std::endl;
 }
 
 std::filesystem::path PrepareDllPath(const std::wstring& procArgv, const std::filesystem::path& dllName) {

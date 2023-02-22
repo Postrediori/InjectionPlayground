@@ -1,6 +1,7 @@
 #pragma once
 
-void LogError(const std::wstring& szFunctionName, bool newLine = true);
+void LogError(const std::wstring& szFunctionName);
+void LogErrorLn(const std::wstring& szFunctionName);
 
 std::filesystem::path PrepareDllPath(const std::wstring& procArgv, const std::filesystem::path& dllName);
 

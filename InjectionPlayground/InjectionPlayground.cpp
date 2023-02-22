@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Utils.h"
+#include "ProcUtils.h"
 #include "InjectionMethods.h"
 
 #ifdef _WIN64
@@ -16,7 +17,7 @@ const std::filesystem::path DllName = L"InjectedDll.x86.dll";
 int InjectToProcessesByName(const std::wstring& processName, const std::filesystem::path& dllPath, InjectionMethod method) {
     wil::unique_handle snapshot(CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0));
     if (!snapshot) {
-        LogError(L"CreateToolhelp32Snapshot");
+        LogErrorLn(L"CreateToolhelp32Snapshot");
         return 1;
     }
 
@@ -52,6 +53,7 @@ int InjectToProcessesByName(const std::wstring& processName, const std::filesyst
 }
 
 int wmain(int argc, const wchar_t* argv[]) {
+
     if (argc < 2) {
         std::wcout << L"Usage: " << argv[0] << L" <process_name.exe> [injection method id]" << std::endl;
         std::wcout << L"Injection methods:" << std::endl;
@@ -59,6 +61,7 @@ int wmain(int argc, const wchar_t* argv[]) {
         std::wcout << L"  2 - RtlCreateUserThread" << std::endl;
         std::wcout << L"  3 - NtCreateThreadEx" << std::endl;
         std::wcout << L"  4 - SetThreadContext" << std::endl;
+        std::wcout << L"  5 - QueueUserApc" << std::endl;
         return 1;
     }
 
@@ -79,6 +82,9 @@ int wmain(int argc, const wchar_t* argv[]) {
             break;
         case 4:
             method = InjectionMethod::SetThreadContext;
+            break;
+        case 5:
+            method = InjectionMethod::QueueUserApc;
             break;
         default:
             std::wcerr << "Error: Unknown injection method id" << std::endl;

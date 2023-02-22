@@ -5,6 +5,7 @@
 This project contains a collection of several DLL injection mthods:
 * Creating remote thread in a target process (CreateRemoteThread, RtlCreateUserThread, NtCreateThreadEx)
 * Injection of shellcode with SetThreadContext
+* Injection with QueueUserApc
 
 The code is capable of injection into both x64 and x86 processes (platform-specific injection DLLs are also generated).
 
@@ -25,12 +26,12 @@ Injection methods:
 * 2 - RtlCreateUserThread
 * 3 - NtCreateThreadEx
 * 4 - SetThreadContext
+* 5 - QueueUserApc
 
 
 ## TODO
 
-* [ ] QueueUserApc
-* [ ] InjectDllByOEP
+* [ ] InjectDllByOEP - injection loader function is contained in the injected DLL itself. May be useful for dealing with complex loading process
 
 Really don't know whether the following is worth adding:
 * [ ] SetWindowsHookEx

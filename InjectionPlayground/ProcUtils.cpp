@@ -4,70 +4,35 @@
 #include "ProcUtils.h"
 
 FARPROC GetRemoteFunction(LPCWSTR moduleName, LPCSTR functionName) {
-    HMODULE hKernel32 = GetModuleHandleW(moduleName);
-    if (hKernel32 == NULL) {
-        LogError(L"GetModuleHandleW", false);
+    HMODULE hModule = GetModuleHandleW(moduleName);
+    if (hModule == NULL) {
+        LogError(L"GetModuleHandleW");
         return NULL;
     }
-    return GetProcAddress(hKernel32, functionName);
+    return GetProcAddress(hModule, functionName);
 }
 
 // Code by AzureGreen via https://github.com/AzureGreen/InjectCollection
-std::vector<DWORD> GetProcessThreadIds(DWORD processId) {
-    using pfnZwQuerySystemInformation = NTSTATUS(NTAPI*)(
-            IN SYSTEM_INFORMATION_CLASS SystemInformationClass,
-            OUT PVOID SystemInformation,
-            IN UINT32 SystemInformationLength,
-            OUT PUINT32 ReturnLength OPTIONAL);
+BOOL GetProcessThreadIds(DWORD processId, std::vector<DWORD>& threadIds) {
+    // Scan with CreateToolhelp32Snapshot
+    // This will enumerate all threads running in the system,
+    // but it doesn't require non-standard API functions
 
-    BOOL                        bOk = FALSE;
-    NTSTATUS                    status = 0;
-    PSYSTEM_PROCESS_INFO        spi = NULL;
-    pfnZwQuerySystemInformation ZwQuerySystemInformation = NULL;
+    THREADENTRY32 threadEntry = { 0 };
+    threadEntry.dwSize = sizeof(THREADENTRY32);
 
-    ZwQuerySystemInformation = reinterpret_cast<pfnZwQuerySystemInformation>(GetRemoteFunction(
-        L"ntdll.dll", "ZwQuerySystemInformation"));
-    if (ZwQuerySystemInformation == NULL) {
-        return {};
+    wil::unique_handle threadSnapshotHandle(CreateToolhelp32Snapshot(TH32CS_SNAPTHREAD, 0));
+    if (!threadSnapshotHandle) {
+        return FALSE;
     }
 
-    const size_t BufferSize = 1024 * 1024; // 1mb TODO: is it possible to use less memory(?)
-    std::vector<BYTE> buffer(BufferSize);
-
-    // In the QuerySystemInformation series of functions, when querying SystemProcessInformation, 
-    // memory must be requested in advance, and the length cannot be queried first and then re-called
-    status = ZwQuerySystemInformation(SystemProcessInformation,
-        static_cast<PVOID>(buffer.data()), BufferSize, NULL);
-    if (!NT_SUCCESS(status)) {
-        LogError(L"ZwQuerySystemInformation", false);
-        return {};
+    if (Thread32First(threadSnapshotHandle.get(), &threadEntry)) {
+        do {
+            if (threadEntry.th32OwnerProcessID == processId) {
+                threadIds.emplace_back(threadEntry.th32ThreadID);
+            }
+        } while (Thread32Next(threadSnapshotHandle.get(), &threadEntry));
     }
 
-    spi = reinterpret_cast<PSYSTEM_PROCESS_INFO>(buffer.data());
-
-    // Iterate through the processes and find our target process
-    while (TRUE) {
-        bOk = FALSE;
-        if (spi->UniqueProcessId == (HANDLE)processId) {
-            bOk = TRUE;
-            break;
-        }
-        else if (spi->NextEntryOffset) {
-            spi = (PSYSTEM_PROCESS_INFO)((PUINT8)spi + spi->NextEntryOffset);
-        }
-        else {
-            break;
-        }
-    }
-
-    std::vector<DWORD> ids;
-
-    if (bOk) {
-        for (INT i = 0; i < spi->NumberOfThreads; i++) {
-            // Return the found threads Id
-            ids.push_back(reinterpret_cast<UINT32>(spi->Threads[i].ClientId.UniqueThread));
-        }
-    }
-
-    return ids;
+    return TRUE;
 }
