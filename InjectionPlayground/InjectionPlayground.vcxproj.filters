@@ -42,6 +42,9 @@
     <ClCompile Include="InjectionByApc.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="InjectionSetWindowsHookEx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -59,9 +62,6 @@
     <ClInclude Include="ProcUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Define.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="InjectionCreateThreads.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -69,6 +69,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="InjectionByApc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InjectionSetWindowsHookEx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

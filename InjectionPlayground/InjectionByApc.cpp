@@ -69,14 +69,21 @@ bool InjectWithApc(DWORD processId, const std::wstring& dllPath) {
     // This one tries to inject into all threads, but usually only one is successfull
     // TODO: Try to actually check what thread is successfull
     for (const auto& remoteThreadId : threadIds) {
-        std::cout << "[ThreadId=" << remoteThreadId << " Status=";
+#ifdef _DEBUG
+        std::wcout << L"[ThreadId=" << remoteThreadId << L" Status=";
+#endif
+        bool status = InjectIntoThreadWithApc(processId, remoteThreadId, dllPath);
+#ifdef _DEBUG
         if (InjectIntoThreadWithApc(processId, remoteThreadId, dllPath)) {
-            std::cout << "OK";
+            std::wcout << L"OK";
         }
         else {
-            std::cout << "Failed";
+            std::wcout << L"Failed";
         }
-        std::cout << "] ";
+        std::wcout << L"] ";
+#else
+        (void)(status);
+#endif
     }
 
     return true;

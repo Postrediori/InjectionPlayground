@@ -5,7 +5,10 @@ enum class InjectionMethod {
     RtlCreateUserThread,
     NtCreateThreadEx,
     SetThreadContext,
-    QueueUserApc
+    QueueUserApc,
+    SetWindowsHookInjection
 };
+
+std::wstring GetInjectionMethodName(InjectionMethod method);
 
 bool InjectIntoProcessDll(DWORD processId, const std::wstring& dllPath, InjectionMethod method);

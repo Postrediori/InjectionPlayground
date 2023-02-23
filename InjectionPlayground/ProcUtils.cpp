@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "Utils.h"
-#include "Define.h"
 #include "ProcUtils.h"
 
 FARPROC GetRemoteFunction(LPCWSTR moduleName, LPCSTR functionName) {
@@ -9,7 +8,11 @@ FARPROC GetRemoteFunction(LPCWSTR moduleName, LPCSTR functionName) {
         LogError(L"GetModuleHandleW");
         return NULL;
     }
-    return GetProcAddress(hModule, functionName);
+    FARPROC proc = GetProcAddress(hModule, functionName);
+    if (!proc) {
+        LogError(L"GetProcAddress");
+    }
+    return proc;
 }
 
 // Code by AzureGreen via https://github.com/AzureGreen/InjectCollection

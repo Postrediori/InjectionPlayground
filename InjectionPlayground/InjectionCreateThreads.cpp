@@ -5,56 +5,55 @@
 
 
 bool InjectWithRemoteThread(DWORD processId, const std::wstring& dllPath, RemoteThreadFunc remoteThreadFunc) {
-    WCHAR szDllFullPath[MAX_PATH] = { 0 };
-    wcscpy_s(szDllFullPath, dllPath.c_str());
-    DWORD dwDllNameSize = (wcslen(szDllFullPath) + 1) * sizeof(wchar_t);
-
-    const DWORD DesiredAccess = PROCESS_ALL_ACCESS;
+    constexpr DWORD DesiredAccess = PROCESS_CREATE_THREAD | // for CreateRemoteThread
+        PROCESS_VM_OPERATION | // for VirtualAllocEx/VirtualFreeEx
+        PROCESS_VM_WRITE; // for WriteProcessMemory
     wil::unique_handle hProcess(OpenProcess(DesiredAccess, FALSE, processId));
     if (!hProcess) {
         LogError(L"OpenProcess");
         return false;
     }
 
-    LPVOID lpBaseAddress = VirtualAllocEx(hProcess.get(), NULL, dwDllNameSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
-    if (lpBaseAddress == NULL) {
+    DWORD dwDllNameSize = (dllPath.length() + 1) * sizeof(wchar_t);
+
+    wistd::unique_ptr<BYTE, std::function<void(LPBYTE)>> lpBaseAddress(
+        (LPBYTE)VirtualAllocEx(hProcess.get(), NULL, dwDllNameSize, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE),
+        [&hProcess](LPBYTE mem) {
+            if (mem) {
+                VirtualFreeEx(hProcess.get(), (LPVOID)mem, 0, MEM_RELEASE);
+            }
+        });
+    if (!lpBaseAddress) {
         LogError(L"VirtualAllocEx");
         return false;
     }
 
-    bool status = true;
+    if (!WriteProcessMemory(hProcess.get(), lpBaseAddress.get(), (LPCVOID)dllPath.c_str(), (SIZE_T)dwDllNameSize, NULL)) {
 
-    do {
-        if (!WriteProcessMemory(hProcess.get(), lpBaseAddress, (LPCVOID)szDllFullPath, (SIZE_T)dwDllNameSize, NULL)) {
-            LogError(L"WriteProcessMemory");
-            status = false;
-            break;
-        }
+        LogError(L"WriteProcessMemory");
+        return false;
+    }
 
-        FARPROC pLoadLibrary = GetRemoteFunction(L"kernel32.dll", "LoadLibraryW");
-        if (!pLoadLibrary) {
-            status = false;
-            break;
-        }
+    FARPROC pLoadLibrary = GetRemoteFunction(L"kernel32.dll", "LoadLibraryW");
+    if (!pLoadLibrary) {
+        return false;
+    }
 
-        wil::unique_handle hRemoteThread(remoteThreadFunc(hProcess.get(), (LPTHREAD_START_ROUTINE)pLoadLibrary, lpBaseAddress));
-        if (!hRemoteThread) {
-            LogError(L"Remote Thread Returned NULL");
-            status = false;
-            break;
-        }
+    wil::unique_handle hRemoteThread(remoteThreadFunc(hProcess.get(), (LPTHREAD_START_ROUTINE)pLoadLibrary, lpBaseAddress.get()));
+    if (!hRemoteThread) {
+        LogError(L"Remote Thread Returned NULL");
+        return false;
+    }
 
 #define WAITING_TIME 100 // INFINITE
 #ifdef WAITING_TIME
-        if (WaitForSingleObject(hRemoteThread.get(), WAITING_TIME) == WAIT_FAILED) {
-            LogError(L"Remote Thread Wait Failed");
-        }
+    if (WaitForSingleObject(hRemoteThread.get(), WAITING_TIME) == WAIT_FAILED) {
+        LogError(L"Remote Thread Wait Failed");
+        return false;
+    }
 #endif
-    } while (false);
 
-    VirtualFreeEx(hProcess.get(), lpBaseAddress, 0, MEM_RELEASE);
-
-    return status;
+    return true;
 }
 
 HANDLE UseCreateRemoteThread(HANDLE hProcess, LPTHREAD_START_ROUTINE pLoadLibrary, PVOID lpBaseAddress) {

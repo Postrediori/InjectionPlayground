@@ -4,10 +4,12 @@
 #include "InjectionMethods.h"
 
 #ifdef _WIN64
-const std::filesystem::path DllName = L"InjectedDll.x64.dll";
+const std::filesystem::path DefaultDllName = L"InjectedDll.x64.dll";
+const std::filesystem::path WindowsHookDllName = L"WindowsHookDll.x64.dll";
 #else
 #  ifdef _WIN32
-const std::filesystem::path DllName = L"InjectedDll.x86.dll";
+const std::filesystem::path DefaultDllName = L"InjectedDll.x86.dll";
+const std::filesystem::path WindowsHookDllName = L"WindowsHookDll.x86.dll";
 #  else
 #    error Unknown architecture
 #  endif
@@ -24,6 +26,7 @@ int InjectToProcessesByName(const std::wstring& processName, const std::filesyst
     PROCESSENTRY32W pe = { 0 };
     pe.dwSize = sizeof(PROCESSENTRY32W);
 
+    std::wcout << L"Injecting with method " << GetInjectionMethodName(method) << std::endl;
     std::wcout << L"Looking for processes with name '" << processName << "'" << std::endl;
 
     std::vector<DWORD> injectedProcesses;
@@ -49,6 +52,10 @@ int InjectToProcessesByName(const std::wstring& processName, const std::filesyst
         injectedProcesses.push_back(dwProcessId);
     }
 
+    if (injectedProcesses.empty()) {
+        std::wcout << L"No process with name " << processName << L" was found" << std::endl;
+    }
+
     return 0;
 }
 
@@ -62,10 +69,9 @@ int wmain(int argc, const wchar_t* argv[]) {
         std::wcout << L"  3 - NtCreateThreadEx" << std::endl;
         std::wcout << L"  4 - SetThreadContext" << std::endl;
         std::wcout << L"  5 - QueueUserApc" << std::endl;
+        std::wcout << L"  6 - SetWindowsHook" << std::endl;
         return 1;
     }
-
-    auto dllPath = PrepareDllPath(argv[0], DllName);
 
     InjectionMethod method = InjectionMethod::CreateRemoteThread;
     if (argc >= 3) {
@@ -86,11 +92,33 @@ int wmain(int argc, const wchar_t* argv[]) {
         case 5:
             method = InjectionMethod::QueueUserApc;
             break;
+        case 6:
+            method = InjectionMethod::SetWindowsHookInjection;
+            break;
         default:
             std::wcerr << "Error: Unknown injection method id" << std::endl;
             return 1;
         }
     }
+
+    // Select injected DLL file name
+    std::wstring dllName;
+    switch (method) {
+    case InjectionMethod::CreateRemoteThread:
+    case InjectionMethod::RtlCreateUserThread:
+    case InjectionMethod::NtCreateThreadEx:
+    case InjectionMethod::SetThreadContext:
+    case InjectionMethod::QueueUserApc:
+        dllName = DefaultDllName;
+        break;
+    case InjectionMethod::SetWindowsHookInjection:
+        dllName = WindowsHookDllName;
+        break;
+    default:
+        std::wcerr << "Error: Unknown injection method id" << std::endl;
+        return 1;
+    }
+    auto dllPath = PrepareDllPath(argv[0], dllName);
 
     if (InjectToProcessesByName(argv[1], dllPath, method) != 0) {
         return 1;

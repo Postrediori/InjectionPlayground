@@ -6,17 +6,17 @@
 
 
 bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring& dllPath) {
-    const DWORD DesiredAccess = PROCESS_ALL_ACCESS;
-    wil::unique_handle remoteProcessHandle(OpenProcess(DesiredAccess, FALSE, processId));
+    constexpr DWORD ProcDesiredAccess = PROCESS_VM_OPERATION | // For VirtualAllocEx/VirtualFreeEx
+        PROCESS_VM_WRITE; // For WriteProcessMemory
+    wil::unique_handle remoteProcessHandle(OpenProcess(ProcDesiredAccess, FALSE, processId));
 
-    // THREAD_ALL_ACCESS is actually unnecessary
-    const DWORD flags = THREAD_SET_CONTEXT | // For SetThreadContext
+    constexpr DWORD ThreadDesiredAccess = THREAD_SET_CONTEXT | // For SetThreadContext
         THREAD_SUSPEND_RESUME | // For SuspendThread and ResumeThread
-        THREAD_GET_CONTEXT;     // For GetThreadContext
+        THREAD_GET_CONTEXT; // For GetThreadContext
 
-    wil::unique_handle remoteThreadHandle(OpenThread(flags,
-        FALSE,                  // Don't inherit handles
-        remoteThreadId));        // TID of our target thread
+    wil::unique_handle remoteThreadHandle(OpenThread(ThreadDesiredAccess,
+        FALSE, // Don't inherit handles
+        remoteThreadId)); // TID of our target thread
     if (!remoteThreadHandle) {
         LogError(L"OpenThread");
         return false;
@@ -56,12 +56,10 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
     }
 
     // Get address of LoadLibraryW function
-    // Note: AzureGreen's code uses GetLoadLibraryAddressInTargetProcessImportTable function
-    // to locate LoadLibraryA in the process import table itself. However, I didn't find
-    // the case where getting the pointer from kernel32 won't work. In addition,
-    // some processes use LoadLibraryEx function (e.g. winword) and it would
-    // require additional checks in addition to implementing another injection program with opcodes.
     FARPROC loadLibraryFunc = GetRemoteFunction(L"kernel32.dll", "LoadLibraryW");
+    if (!loadLibraryFunc) {
+        return false;
+    }
 
     using namespace IntegerTypes;
 #ifdef _WIN64
@@ -143,8 +141,6 @@ bool InjectIntoThread(DWORD processId, DWORD remoteThreadId, const std::wstring&
     if (ResumeThread(remoteThreadHandle.get()) == (DWORD)(-1)) {
         LogError(L"ResumeThread");
     }
-
-    // Don't need to execute VirtualFreeEx for buffer (?)
 
     return true;
 }

@@ -1,0 +1,8 @@
+#pragma once
+
+#define WINDOWS_HOOK_DLL_LOADER_FUNC ProcessInjection
+
+#define STR_VALUE(arg) #arg
+#define FUNCTION_NAME(name) STR_VALUE(name)
+
+#define WINDOWS_HOOK_DLL_LOADER_FUNC_STR FUNCTION_NAME(WINDOWS_HOOK_DLL_LOADER_FUNC)

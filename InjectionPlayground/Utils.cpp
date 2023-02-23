@@ -7,9 +7,14 @@ std::wstring GetErrorDescription(DWORD dwErrorCode) {
     // Ask Win32 to give the string representation of the error code
     DWORD dwSize = FormatMessageW(
         FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-        NULL, dwErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), static_cast<LPWSTR>(lpBuffer.get()), 0, NULL);
+        NULL, dwErrorCode, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), reinterpret_cast<LPWSTR>(lpBuffer.put()), 0, NULL);
+    if (dwSize == 0) {
+        return L"Unable to get error description";
+    }
 
     std::wstring s(static_cast<LPCWSTR>(lpBuffer.get()), dwSize);
+
+    s.erase(s.find_last_not_of(L"\r\n") + 1); // right trim
 
     return s;
 }
@@ -23,7 +28,7 @@ void LogError(const std::wstring& szFunctionName) {
 
     std::wcerr << L"ERROR function='" << szFunctionName <<
         L"' code=" << dwErrorCode <<
-        L" decription='" << GetErrorDescription(dwErrorCode) << "'";
+        L" decription='" << GetErrorDescription(dwErrorCode) << L"' ";
 }
 
 void LogErrorLn(const std::wstring& szFunctionName) {
