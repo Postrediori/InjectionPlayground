@@ -30,7 +30,7 @@ int InjectToProcessesByName(const std::wstring& processName, const std::filesyst
     std::wcout << L"Looking for processes with name '" << processName << "'" << std::endl;
 
     std::vector<DWORD> injectedProcesses;
-    while (Process32Next(snapshot.get(), (LPPROCESSENTRY32W)&pe)) {
+    while (Process32NextW(snapshot.get(), (LPPROCESSENTRY32W)&pe)) {
         if (!CaseInsensitiveEqual(pe.szExeFile, processName)) {
             continue;
         }
