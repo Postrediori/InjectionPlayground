@@ -27,7 +27,7 @@ std::wstring GetInjectionMethodName(InjectionMethod method) {
     return L"Error: Unknown injection method";
 }
 
-bool InjectIntoProcessDll(DWORD processId, const std::wstring& dllPath, InjectionMethod method) {
+bool InjectIntoProcessDll(DWORD processId, const std::wstring& dllPath, InjectionMethod method, int hookType) {
     switch (method) {
     case InjectionMethod::CreateRemoteThread:
         return InjectWithRemoteThread(processId, dllPath, UseCreateRemoteThread);
@@ -40,7 +40,7 @@ bool InjectIntoProcessDll(DWORD processId, const std::wstring& dllPath, Injectio
     case InjectionMethod::QueueUserApc:
         return InjectWithApc(processId, dllPath);
     case InjectionMethod::SetWindowsHookInjection:
-        return InjectWithSetWindowHookEx(processId, dllPath);
+        return InjectWithSetWindowHookEx(processId, dllPath, hookType);
     default:
         break;
     }

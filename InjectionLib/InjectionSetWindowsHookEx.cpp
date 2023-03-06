@@ -5,7 +5,7 @@
 #include "InjectionSetWindowsHookEx.h"
 
 
-bool InjectThreadWithSetWindowHookEx(DWORD processId, DWORD threadId, const std::wstring& dllPath) {
+bool InjectThreadWithSetWindowHookEx(DWORD processId, DWORD threadId, const std::wstring& dllPath, int hookType) {
     (void)(processId);
 
     HMODULE dllModule = LoadLibraryW(dllPath.c_str());
@@ -20,9 +20,7 @@ bool InjectThreadWithSetWindowHookEx(DWORD processId, DWORD threadId, const std:
         return false;
     }
 
-    // constexpr int hookId = WH_KEYBOARD;
-    constexpr int hookId = WH_GETMESSAGE;
-    wil::unique_hhook hookHandle(SetWindowsHookExW(hookId, (HOOKPROC)functionAddress, dllModule, threadId));
+    wil::unique_hhook hookHandle(SetWindowsHookExW(hookType, (HOOKPROC)functionAddress, dllModule, threadId));
     if (!hookHandle) {
         LogError(L"SetWindowsHookExW");
         return false;
@@ -33,7 +31,7 @@ bool InjectThreadWithSetWindowHookEx(DWORD processId, DWORD threadId, const std:
     return true;
 }
 
-bool InjectWithSetWindowHookEx(DWORD processId, const std::wstring& dllPath) {
+bool InjectWithSetWindowHookEx(DWORD processId, const std::wstring& dllPath, int hookType) {
     std::vector<DWORD> threadIds;
     if (!GetProcessThreadIds(processId, threadIds)) {
         return false;
@@ -41,5 +39,8 @@ bool InjectWithSetWindowHookEx(DWORD processId, const std::wstring& dllPath) {
 
     DWORD remoteThreadId = threadIds[0]; // TODO: Select in a better way
 
-    return InjectThreadWithSetWindowHookEx(processId, remoteThreadId, dllPath);
+    if (hookType == 0) {
+        hookType = DefaultWindowHookId;
+    }
+    return InjectThreadWithSetWindowHookEx(processId, remoteThreadId, dllPath, hookType);
 }

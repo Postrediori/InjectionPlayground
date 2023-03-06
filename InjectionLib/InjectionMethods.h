@@ -11,4 +11,4 @@ enum class InjectionMethod {
 
 std::wstring GetInjectionMethodName(InjectionMethod method);
 
-bool InjectIntoProcessDll(DWORD processId, const std::wstring& dllPath, InjectionMethod method);
+bool InjectIntoProcessDll(DWORD processId, const std::wstring& dllPath, InjectionMethod method, int hookType = 0);

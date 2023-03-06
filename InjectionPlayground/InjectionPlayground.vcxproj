@@ -75,25 +75,21 @@
     <LinkIncremental>true</LinkIncremental>
     <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
     <TargetName>$(ProjectName).$(PlatformTarget)</TargetName>
-    <IncludePath>$(SolutionDir)WindowsHookDll;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
     <TargetName>$(ProjectName).$(PlatformTarget)</TargetName>
-    <IncludePath>$(SolutionDir)WindowsHookDll;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
     <TargetName>$(ProjectName).$(PlatformTarget)</TargetName>
-    <IncludePath>$(SolutionDir)WindowsHookDll;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <PublicIncludeDirectories>$(PublicIncludeDirectories)</PublicIncludeDirectories>
     <TargetName>$(ProjectName).$(PlatformTarget)</TargetName>
-    <IncludePath>$(SolutionDir)WindowsHookDll;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -104,7 +100,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\WIL\include;$(SolutionDir)UtilsLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\WIL\include;$(SolutionDir)UtilsLib;$(SolutionDir)InjectionLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -126,7 +122,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\WIL\include;$(SolutionDir)UtilsLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\WIL\include;$(SolutionDir)UtilsLib;$(SolutionDir)InjectionLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -147,7 +143,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\WIL\include;$(SolutionDir)UtilsLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\WIL\include;$(SolutionDir)UtilsLib;$(SolutionDir)InjectionLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -169,7 +165,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <LanguageStandard>stdcpp17</LanguageStandard>
-      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\WIL\include;$(SolutionDir)UtilsLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)3rdparty\WIL\include;$(SolutionDir)UtilsLib;$(SolutionDir)InjectionLib;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -182,23 +178,16 @@
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="InjectionByApc.cpp" />
-    <ClCompile Include="InjectionCreateThreads.cpp" />
-    <ClInclude Include="InjectionByApc.h" />
-    <ClInclude Include="InjectionCreateThreads.h" />
-    <ClCompile Include="InjectionMethods.cpp" />
     <ClCompile Include="InjectionPlayground.cpp" />
-    <ClCompile Include="InjectionSetThreadContext.cpp" />
-    <ClCompile Include="InjectionSetWindowsHookEx.cpp" />
     <ClCompile Include="pch.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="InjectionMethods.h" />
-    <ClInclude Include="InjectionSetThreadContext.h" />
-    <ClInclude Include="InjectionSetWindowsHookEx.h" />
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\InjectionLib\InjectionLib.vcxproj">
+      <Project>{ce098a3a-e8f1-472e-a65f-d24ad624e828}</Project>
+    </ProjectReference>
     <ProjectReference Include="..\UtilsLib\UtilsLib.vcxproj">
       <Project>{46f2a03a-30eb-4eed-b1a1-7b37fcdd7cdb}</Project>
     </ProjectReference>
