@@ -53,3 +53,8 @@ bool CaseInsensitiveEqual(const std::wstring& nameA, const std::wstring& nameB) 
         }
     );
 }
+
+std::string ToAsciiString(const std::wstring& ws) {
+    std::string s(ws.begin(), ws.end());
+    return s;
+}
