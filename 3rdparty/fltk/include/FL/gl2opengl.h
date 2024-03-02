@@ -1,10 +1,13 @@
-/*	gl.h
+/*      gl.h
 
-	GL to OpenGL translator.
-	If you include this, you might be able to port old GL programs.
-	There are also much better emulators available on the net.
+        GL to OpenGL translator.
+        If you include this, you might be able to port old GL programs.
+        There are also much better emulators available on the net.
 
 */
+
+#ifndef _FL_gl2opengl_h_
+#define _FL_gl2opengl_h_
 
 #include <FL/gl.h>
 #include "gl_draw.H"
@@ -33,3 +36,5 @@ inline void recti(int x,int y,int r,int t) {gl_rect(x,y,r-x,t-y);}
 inline void rectfi(int x,int y,int r,int t) {glRecti(x,y,r+1,t+1);}
 inline void rects(int x,int y,int r,int t) {gl_rect(x,y,r-x,t-y);}
 inline void rectfs(int x,int y,int r,int t) {glRects(x,y,r+1,t+1);}
+
+#endif /* _FL_gl2opengl_h_ */

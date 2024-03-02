@@ -1,19 +1,17 @@
 //
-// "$Id$"
-//
 // Menu base class header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2016 by Bill Spitzak and others.
+// Copyright 1998-2019 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
 // file is missing or damaged, see the license at:
 //
-//     http://www.fltk.org/COPYING.php
+//     https://www.fltk.org/COPYING.php
 //
-// Please report all bugs and problems on the following page:
+// Please see the following page on how to report bugs and issues:
 //
-//     http://www.fltk.org/str.php
+//     https://www.fltk.org/bugs.php
 //
 
 /* \file
@@ -47,16 +45,22 @@
       the Fl_Menu_ widget's callback is invoked with any userdata
       configured for it. The callback can determine which item
       was picked using value(), mvalue(), item_pathname(), etc.
+
+  The line spacing between menu items can be controlled with the global setting
+  Fl::menu_linespacing().
+ \see Fl_Widget::shortcut_label(int)
 */
 class FL_EXPORT Fl_Menu_ : public Fl_Widget {
 
   Fl_Menu_Item *menu_;
   const Fl_Menu_Item *value_;
+  const Fl_Menu_Item *prev_value_;
 
 protected:
 
-  uchar alloc;			// flag indicates if menu_ is a dynamic copy (=1) or not (=0)
+  uchar alloc;                  // flag indicates if menu_ is a dynamic copy (=1) or not (=0)
   uchar down_box_;
+  Fl_Boxtype menu_box_;
   Fl_Font textfont_;
   Fl_Fontsize textsize_;
   Fl_Color textcolor_;
@@ -71,6 +75,8 @@ public:
   const Fl_Menu_Item* picked(const Fl_Menu_Item*);
   const Fl_Menu_Item* find_item(const char *name);
   const Fl_Menu_Item* find_item(Fl_Callback*);
+  const Fl_Menu_Item* find_item_with_user_data(void*);
+  const Fl_Menu_Item* find_item_with_argument(long);
   int find_index(const char *name) const;
   int find_index(const Fl_Menu_Item *item) const;
   int find_index(Fl_Callback *cb) const;
@@ -91,8 +97,25 @@ public:
 
   /**
     Returns a pointer to the array of Fl_Menu_Items.  This will either be
-    the value passed to menu(value) or the private copy.
-    \sa size() -- returns the size of the Fl_Menu_Item array.
+    the value passed to menu(value) or the private copy or an internal
+    (temporary) location (see note below).
+
+    \note <b>Implementation details - may be changed in the future.</b>
+      All modifications of the menu array are done by copying the entire
+      menu array to an internal storage for optimization of memory
+      allocations, for instance when using add() or insert(). While this
+      is done, menu() returns the pointer to this internal location. The
+      entire menu will be copied back to private storage when needed,
+      i.e. when \b another Fl_Menu_ is modified. You can force this
+      reallocation after you're done with all menu modifications by calling
+      Fl_Menu_::menu_end() to make sure menu() returns a permanent pointer
+      to private storage (until the menu is modified again).
+      Note also that some menu methods (e.g. Fl_Menu_Button::popup()) call
+      menu_end() internally to ensure a consistent menu array while the
+      menu is open.
+
+    \see size() -- returns the size of the Fl_Menu_Item array.
+    \see menu_end() -- finish %menu modifications (optional)
 
     \b Example: How to walk the array:
     \code
@@ -108,6 +131,7 @@ public:
 
   */
   const Fl_Menu_Item *menu() const {return menu_;}
+  const Fl_Menu_Item *menu_end(); // in src/Fl_Menu_add.cxx
   void menu(const Fl_Menu_Item *m);
   void copy(const Fl_Menu_Item *m, void* user_data = 0);
   int insert(int index, const char*, int shortcut, Fl_Callback*, void* = 0, int = 0);
@@ -136,6 +160,10 @@ public:
 
   /** Returns a pointer to the last menu item that was picked.  */
   const Fl_Menu_Item *mvalue() const {return value_;}
+  /** Returns a pointer to the menu item that was picked before the current one was picked.
+   This call gives devs additional details how a user changed a choice in the Fl_Choice widget.
+   */
+  const Fl_Menu_Item *prev_mvalue() const {return prev_value_;}
   /** Returns the index into menu() of the last item chosen by the user.  It is zero initially. */
   int value() const {return value_ ? (int)(value_-menu_) : -1;}
   int value(const Fl_Menu_Item*);
@@ -171,8 +199,18 @@ public:
     FL_WHITE, for back compatibility.
   */
   Fl_Boxtype down_box() const {return (Fl_Boxtype)down_box_;}
-  /**    See Fl_Boxtype Fl_Menu_::down_box() const   */
+  /** Sets the box type used to surround the currently-selected items in the menus.  */
   void down_box(Fl_Boxtype b) {down_box_ = b;}
+
+  /** Get the box type for the menu popup windows.
+   \return the box type, or FL_NO_BOX if Fl_Menu_::box() is to be used instead
+   */
+  Fl_Boxtype menu_box() const { return menu_box_; }
+  /** Set the box type for the menu popup windows.
+   If menu_box set to FL_NO_BOX, the menu window will use Fl_Menu_::box() instead.
+   \param[in] b new box type or FL_NO_BOX
+   */
+  void menu_box(Fl_Boxtype b) { menu_box_ = b; }
 
   /** For back compatibility, same as selection_color() */
   Fl_Color down_color() const {return selection_color();}
@@ -182,7 +220,3 @@ public:
 };
 
 #endif
-
-//
-// End of "$Id$".
-//

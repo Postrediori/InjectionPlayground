@@ -1,19 +1,19 @@
 //
-// "$Id$"
-//
 // Header file for Fl_Text_Buffer class.
 //
-// Copyright 2001-2016 by Bill Spitzak and others.
+// Copyright 2001-2023 by Bill Spitzak and others.
 // Original code Copyright Mark Edel.  Permission to distribute under
 // the LGPL for the FLTK library granted by Mark Edel.
 //
-// Please report all bugs and problems on the following page:
+// This library is free software. Distribution and use rights are outlined in
+// the file "COPYING" which should have been included with this file.  If this
+// file is missing or damaged, see the license at:
 //
-//     http://www.fltk.org/str.php
+//     https://www.fltk.org/COPYING.php
 //
-// Please report all bugs and problems on the following page:
+// Please see the following page on how to report bugs and issues:
 //
-//     http://www.fltk.org/str.php
+//     https://www.fltk.org/bugs.php
 //
 
 /* \file
@@ -22,6 +22,8 @@
 #ifndef FL_TEXT_BUFFER_H
 #define FL_TEXT_BUFFER_H
 
+#include <stdarg.h>     /* va_list */
+#include "fl_attr.h"    /* Doxygen can't find <FL/fl_attr.h> */
 
 #undef ASSERT_UTF8
 
@@ -38,7 +40,7 @@
 /*
  "character size" is the size of a UTF-8 character in bytes
  "character width" is the width of a Unicode character in pixels
- "column" was orginally defined as a character offset from the left margin.
+ "column" was originally defined as a character offset from the left margin.
  It was identical to the byte offset. In UTF-8, we have neither a byte offset
  nor truly fixed width fonts (*). Column could be a pixel value multiplied with
  an average character width (which is a bearable approximation).
@@ -59,73 +61,114 @@
 
 #include "Fl_Export.H"
 
+class Fl_Text_Undo_Action_List;
+class Fl_Text_Undo_Action;
 
 /**
- \class Fl_Text_Selection
- \brief This is an internal class for Fl_Text_Buffer to manage text selections.
- This class works correctly with UTF-8 strings assuming that the parameters
- for all calls are on character boundaries.
- */
+  \class Fl_Text_Selection
+  \brief This is an internal class for Fl_Text_Buffer to manage text selections.
+
+  All methods use byte (not UTF-8 character) offsets and start at 0. This
+  class works correctly with UTF-8 strings assuming that the parameters
+  for all calls are on character boundaries.
+
+  If the selection is inactive (not currently used), then selected()
+  returns \p false and start() and end() return 0 (zero).
+
+  The stored offsets are in ascending order, hence the following conditions
+  are true (pseudo code):
+  \code
+    if ( !selected() ) :  (start() == 0) && (end() == 0) && (start() == end())
+    if (  selected() ) :  start() < end()
+    always             :  0 <= start() <= end()
+    always             :  length() == end() - start()
+  \endcode
+
+  The selection size in bytes can always (unconditionally) be computed by
+  \code
+    int size = sel->end() - sel->start();
+  \endcode
+
+  \see length()
+
+  \note
+    The \b protected member variables \p mStart and \p mEnd are not
+    necessarily 0 (zero) if mSelected == \p false because they are
+    not cleared when \p selected(false) is called (as of Jul 2017).
+    This may be changed in the future.
+*/
 class FL_EXPORT Fl_Text_Selection {
   friend class Fl_Text_Buffer;
 
 public:
 
-  /**
-   \brief Set the selection range.
-   \param start byte offset to first selected character
-   \param end byte offset pointing after last selected character
-   */
-  void set(int start, int end);
+  // Sets the selection range and selected().
+  void set(int startpos, int endpos);
 
-  /**
-   \brief Updates a selection after text was modified.
-
-   Updates an individual selection for changes in the corresponding text
-   \param pos byte offset into text buffer at which the change occurred
-   \param nDeleted number of bytes deleted from the buffer
-   \param nInserted number of bytes inserted into the buffer
-   */
+  // Updates a selection after text was modified.
   void update(int pos, int nDeleted, int nInserted);
 
   /**
-   \brief Return the byte offset to the first selected character.
-   \return byte offset
-   */
-  int start() const { return mStart; }
+    \brief Returns the byte offset to the first selected character.
+
+    The returned offset is only valid if selected() returns true.
+    If the selection is not valid the returned offset is 0 since FLTK 1.4.0.
+
+    \note In FLTK 1.3.x the returned offset could be non-zero even if
+      selected() would have returned 0.
+
+    \return byte offset or 0 if not selected.
+  */
+  int start() const { return mSelected ? mStart : 0; }
 
   /**
-   \brief Return the byte offset to the character after the last selected character.
-   \return byte offset
-   */
-  int end() const { return mEnd; }
+    \brief Returns the byte offset to the character after the last selected character.
+
+    The returned offset is only valid if selected() returns true (non-zero).
+    The offset is 0 if no text is selected (since FLTK 1.4.0).
+
+    \note In FLTK 1.3.x the returned offset could be non-zero even if
+      selected() would have returned 0.
+
+    \return byte offset or 0 if not selected.
+  */
+  int end() const { return mSelected ? mEnd : 0; }
 
   /**
    \brief Returns true if any text is selected.
-   \return a non-zero number if any text has been selected, or 0
-   if no text is selected.
-   */
+   \return  \p true if any text has been selected, or \p false
+            if no text is selected.
+  */
   bool selected() const { return mSelected; }
 
   /**
-   \brief Modify the 'selected' flag.
-   \param b new flag
-   */
+    \brief Modifies the 'selected' flag.
+    \param b new flag
+  */
   void selected(bool b) { mSelected = b; }
 
   /**
-   Return true if position \p pos with indentation \p dispIndex is in
-   the Fl_Text_Selection.
-   */
+    \brief Returns the size in bytes of the selection.
+
+    This is a convenience method. It always returns the same as
+    \code
+      end() - start()
+    \endcode
+    and it returns 0 if selected() == false.
+
+    \return size in bytes or 0 if not selected.
+
+    \since FLTK 1.4.0
+  */
+  int length() const { return mSelected ? mEnd - mStart : 0; }
+
+  // Returns true if position \p pos is in this Fl_Text_Selection.
   int includes(int pos) const;
 
-  /**
-   \brief Return the positions of this selection.
-   \param start return byte offset to first selected character
-   \param end return byte offset pointing after last selected character
-   \return true if selected
-   */
-  int position(int* start, int* end) const;
+  // Returns true if selected() and the positions of this selection.
+  int selected(int *startpos, int *endpos) const;
+  FL_DEPRECATED("in 1.4.0 - use selected(startpos, endpos) instead",
+  int position(int *startpos, int *endpos) const) { return selected(startpos, endpos); }
 
 protected:
 
@@ -144,16 +187,16 @@ typedef void (*Fl_Text_Predelete_Cb)(int pos, int nDeleted, void* cbArg);
 
 
 /**
- \brief This class manages Unicode text displayed in one or more Fl_Text_Display widgets.
+ This class manages Unicode text displayed in one or more Fl_Text_Display widgets.
 
  All text in Fl_Text_Buffer must be encoded in UTF-8. All indices used in the
  function calls must be aligned to the start of a UTF-8 sequence. All indices
  and pointers returned will be aligned. All functions that return a single
- character will return that in an unsiged int in UCS-4 encoding.
+ character will return that in an unsigned int in UCS-4 encoding.
 
- The Fl_Text_Buffer class is used by the Fl_Text_Display
- and Fl_Text_Editor to manage complex text data and is based upon the
- excellent NEdit text editor engine - see http://www.nedit.org/.
+ The Fl_Text_Buffer class is used by the Fl_Text_Display and Fl_Text_Editor
+ to manage complex text data and is based upon the excellent NEdit text
+ editor engine - see https://sourceforge.net/projects/nedit/.
  */
 class FL_EXPORT Fl_Text_Buffer {
 public:
@@ -240,15 +283,20 @@ public:
   /**
    Inserts null-terminated string \p text at position \p pos.
    \param pos insertion position as byte offset (must be UTF-8 character aligned)
-   \param text UTF-8 encoded and nul terminated text
+   \param text UTF-8 encoded text
+   \param insertedLength number of bytes to insert, or -1 to indicate \p text is null-terminated
    */
-  void insert(int pos, const char* text);
+  void insert(int pos, const char* text, int insertedLength = -1);
 
   /**
    Appends the text string to the end of the buffer.
-   \param t UTF-8 encoded and nul terminated text
+   \param t UTF-8 encoded text
+   \param addedLength number of bytes to append, or -1 to indicate \p t is null-terminated
    */
-  void append(const char* t) { insert(length(), t); }
+  void append(const char* t, int addedLength = -1) { insert(length(), t, addedLength); }
+
+  void vprintf(const char *fmt, va_list ap);
+  void printf(const char* fmt, ...);
 
   /**
    Deletes a range of characters in the buffer.
@@ -262,9 +310,10 @@ public:
    null-terminated string \p text in their place in the buffer.
    \param start byte offset to first character to be removed and new insert position
    \param end byte offset to character after last character to be removed
-   \param text UTF-8 encoded and nul terminated text
+   \param text UTF-8 encoded text
+   \param insertedLength number of bytes to insert, or -1 to indicate \p text is null-terminated
    */
-  void replace(int start, int end, const char *text);
+  void replace(int start, int end, const char *text, int insertedLength = -1);
 
   /**
    Copies text from another Fl_Text_Buffer to this one.
@@ -282,7 +331,28 @@ public:
   int undo(int *cp=0);
 
   /**
-   Lets the undo system know if we can undo changes
+   Check if undo is enabled and if the last action can be undone.
+   \see canUndo()
+   */
+  bool can_undo() const;
+
+  /**
+   Redo previous undo action.
+   */
+  int redo(int *cp=0);
+
+  /**
+   Check if undo is enabled and if the last undo action can be redone.
+   \see canUndo()
+   */
+  bool can_redo() const;
+
+  /**
+   Enable or disable undo actions for this text buffer.
+   Undo actions are enable for text buffer by default. If used as a style buffer
+   in Fl_Text_Display, undo actions are disabled as they are handled by the
+   text buffer.
+   \see can_undo()
    */
   void canUndo(char flag=1);
 
@@ -437,9 +507,7 @@ public:
   void highlight(int start, int end);
 
   /**
-   Returns the highlighted text.
-
-   When you are done with the text, free it using the free() function.
+   Returns a non-zero value if text has been highlighted, 0 otherwise.
    */
   int highlight() { return mHighlight.selected(); }
 
@@ -699,6 +767,7 @@ public:
    to be informed if file input required transcoding to UTF-8.
    */
   void (*transcoding_warning_action)(Fl_Text_Buffer*);
+  bool is_word_separator(int pos) const;
 
 protected:
 
@@ -718,13 +787,14 @@ protected:
   /**
    Internal (non-redisplaying) version of insert().
 
-   Returns the length of text inserted (this is just strlen(\p text), however
+   Returns the length of text inserted (this is just strlen(\p text) if
+   \p insertedLength == -1, however
    this calculation can be expensive and the length will be required by any
    caller who will continue on to call redisplay). \p pos must be contiguous
    with the existing text in the buffer (i.e. not past the end).
    \return the number of bytes inserted
    */
-  int insert_(int pos, const char* text);
+  int insert_(int pos, const char* text, int insertedLength = -1);
 
   /**
    Internal (non-redisplaying) version of remove().
@@ -769,6 +839,11 @@ protected:
    */
   void update_selections(int pos, int nDeleted, int nInserted);
 
+  /**
+   Apply the current undo/redo operation, called from undo() or redo().
+   */
+  int apply_undo(Fl_Text_Undo_Action* action, int* cursorPos);
+
   Fl_Text_Selection mPrimary;     /**< highlighted areas */
   Fl_Text_Selection mSecondary;   /**< highlighted areas */
   Fl_Text_Selection mHighlight;   /**< highlighted areas */
@@ -796,10 +871,9 @@ protected:
   int mPreferredGapSize;          /**< the default allocation for the text gap is 1024
                                        bytes and should only be increased if frequent
                                        and large changes in buffer size are expected */
+  Fl_Text_Undo_Action* mUndo;     /**< local undo event */
+  Fl_Text_Undo_Action_List* mUndoList; /**< List of undo event */
+  Fl_Text_Undo_Action_List* mRedoList; /**< List of redo event */
 };
 
 #endif
-
-//
-// End of "$Id$".
-//
