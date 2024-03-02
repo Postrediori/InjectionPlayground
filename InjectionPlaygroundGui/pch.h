@@ -10,7 +10,9 @@
 #include <FL/Fl_Box.H>
 #include <FL/Fl_Button.H>
 #include <FL/Fl_Choice.H>
+#include <FL/Fl_Flex.H>
 #include <FL/Fl_Input.H>
+#include <FL/Fl_Pack.H>
 #include <FL/Fl_Radio_Round_Button.H>
 #include <FL/Fl_Text_Buffer.H>
 #include <FL/Fl_Text_Display.H>
