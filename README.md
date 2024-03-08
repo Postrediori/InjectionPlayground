@@ -35,10 +35,14 @@ Project consists of the following parts:
   * **InjectedPayloadLib** &ndash; static library for code that is common between InjectedDll and WindowsHookDll. Logging stuff and messaging functions.
   * **InjectionLib** &ndash; static library with actual implementations of injections. Used by InjectionPlayground
   * **UtilsLib** &ndash; Universal utils library: logging, process utils, assembly wrapper for shell code data.
+* **InjectionPlaygroundManaged** &ndash; C# version of DLL injection using **CreateRemoteThread**. It continiously detects launches of new processes in the system.
+
 
 ## Usage
 
-Usage of a console utility:
+### InjectionPlayground
+
+The console utility accepts full process name (with `.exe`) and optionally, a method of injection:
 
 ```
 InjectionPlayground <process name> [injection method id] [type of hook for SetWindowsHook]
@@ -68,6 +72,16 @@ Message types for **SetWindowsHook** method (refer to the [SetWindowsHookEx docu
 * **WH_MSGFILTER**
 * **WH_SHELL**
 * **WH_SYSMSGFILTER**
+
+### InjectionPlaygroundManaged
+
+This utility should be run from console with administrator rights (or it will ask for admin right on launch).
+
+```
+InjectionPlaygroundManaged <process name> [injection dll file]
+```
+
+The first argument is name of the process (again, with `.exe`) and the second optional parameter is name of the DLL (by default `InjectedDll.x86.dll` or `InjectedDll.x64.dll` depending on architecture).
 
 ## TODO
 
