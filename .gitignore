@@ -1,5 +1,6 @@
-Debug
-Release
 bin
+lib
+out
 .vs
 *.vcxproj.user
+*.csproj.user
