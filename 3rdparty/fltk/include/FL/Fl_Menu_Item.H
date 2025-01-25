@@ -1,7 +1,7 @@
 //
 // Menu item header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2022 by Bill Spitzak and others.
+// Copyright 1998-2024 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -34,8 +34,8 @@ enum { // values for flags:
   FL_SUBMENU_POINTER = 0x20,       ///< Indicates user_data() is a pointer to another menu array
   FL_SUBMENU         = 0x40,       ///< Item is a submenu to other items
   FL_MENU_DIVIDER    = 0x80,       ///< Creates divider line below this item. Also ends a group of radio buttons
-  FL_MENU_HORIZONTAL = 0x100,      ///< ??? -- reserved, internal (do not use)
-  FL_MENU_RESERVED   = 0xffffff00  ///< These bits are reserved for internal or future usage (do not use)
+  FL_MENU_HORIZONTAL = 0x100       ///< ??? -- reserved, internal (do not use)
+  ///< Note: \b ALL other bits in \p flags are reserved: do not use them for your own purposes!
 };
 
 extern FL_EXPORT Fl_Shortcut fl_old_shortcut(const char*);
@@ -67,10 +67,19 @@ class Fl_Menu_;
    FL_SUBMENU_POINTER = 0x20,       // Indicates user_data() is a pointer to another menu array
    FL_SUBMENU         = 0x40,       // This item is a submenu to other items
    FL_MENU_DIVIDER    = 0x80,       // Creates divider line below this item. Also ends a group of radio buttons.
-   FL_MENU_HORIZONTAL = 0x100,      // ??? -- reserved, internal (do not use)
-   FL_MENU_RESERVED   = 0xffffff00  // These bits are reserved for internal or future usage (do not use)
+   FL_MENU_HORIZONTAL = 0x100       // ??? -- reserved, internal (do not use)
   };
   \endcode
+
+  \note \b All other bits in \p flags are reserved for FLTK usage, do not use any bits of the
+    \p flags variable for your own purposes. Even \b undocumented bits can be used for internal
+    purposes in this or any future FLTK version.
+
+  Some \p flags bits may be changed during runtime by user code, particularly if you need to change
+  the value of a menu item (ON/OFF) or make it active or inactive. Such changes must be done with
+  caution so they don't affect other (maybe undocumented) bits, i.e. you need to make proper bit
+  operations to set or clear only these particular bits.
+
   Typically menu items are statically defined; for example:
   \code
   Fl_Menu_Item popup[] = {
@@ -318,7 +327,9 @@ struct FL_EXPORT Fl_Menu_Item {
     This method does not set the userdata() argument.
     \see Fl_Callback_p Fl_MenuItem::callback() const
    */
-  void callback(Fl_Callback0*c) {callback_=(Fl_Callback*)c;}
+  void callback(Fl_Callback0 *c) {
+    callback_ = (Fl_Callback *)(void *)c;
+  }
 
   /**
     Sets the menu item's callback function and userdata() argument.
@@ -326,7 +337,10 @@ struct FL_EXPORT Fl_Menu_Item {
     for the menu item's callback function.
     \see Fl_Callback_p Fl_MenuItem::callback() const
    */
-  void callback(Fl_Callback1*c, long p=0) {callback_=(Fl_Callback*)c; user_data_=(void*)(fl_intptr_t)p;}
+  void callback(Fl_Callback1 *c, long p = 0) {
+    callback_ = (Fl_Callback *)(void *)c;
+    user_data_ = (void *)(fl_intptr_t)p;
+  }
 
   /**
     Gets the user_data() argument that is sent to the callback function.

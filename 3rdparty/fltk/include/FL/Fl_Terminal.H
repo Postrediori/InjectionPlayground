@@ -1,8 +1,8 @@
 //
-// Fl_Terminal.cxx - A terminal widget for Fast Light Tool Kit (FLTK).
+// Fl_Terminal - A terminal widget for Fast Light Tool Kit (FLTK).
 //
 // Copyright 2022 by Greg Ercolano.
-// Copyright 2023 by Bill Spitzak and others.
+// Copyright 2024 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -82,6 +82,15 @@
   text colors. Others, such as cursor_up() are protected to prevent common misuse, and are
   available only to subclasses.
 
+  Some common operations:
+  - Set the terminal's background color, see color(Fl_Color)
+  - Set the terminal's default text color, see textfgcolor_default(Fl_Color)
+  - Printing text to the terminal, see Fl_Terminal::printf() and Fl_Terminal::append()
+  - Clearing the screen, see clear()
+  - Getting the terminal's buffer contents, see text()
+  - Getting single utf8 characters by row/col from the terminal display, see utf8_char_at_disp()
+  - Getting the text from a text selection, see get_selection()
+
   For applications that need input support, the widget can be subclassed to provide
   keyboard input, and advanced features like pseudo ttys, termio, serial port I/O, etc.,
   as such features are beyond the scope of FLTK.
@@ -135,7 +144,7 @@
   Single character output can be done with:
   \par
      - print_char() to print a single ASCII/UTF-8 char at the cursor
-     - putchar() to put single ASCII/UTF-8 char at an x,y position
+     - plot_char() to put single ASCII/UTF-8 char at an x,y position
   \par
 
   \subsection Fl_Terminal_Attributes Text Attributes
@@ -279,16 +288,16 @@
                              ░░░░░░:::::::::::::░░░░░◉
                              ░░░░░░::##:::::##:◉░░░░░░╲
                              ░░░░░░::###:::###::╲░░░░░ ╲
-                             ░░░░░░::####:####::░╲░░░░  color()
+                             ░░░░░░::####:####::░╲░░░░  Fl_Terminal::color()
                              ░░░░░░::##:###:##::░░╲░░░
                              ░░░░░░::##::#::##::░░░╲░░
                              ░░░░░░::##:.:::##::░░░░╲░
                              ░░░░░░::##:::::#◉::░░░░░╲
                              ░░░░░░:::::::::::╲:░░░░░░╲
-                             ░░░░░░░░░░░░░░░░░░╲░░░░░░ textbgcolor()
+                             ░░░░░░░░░░░░░░░░░░╲░░░░░░ Fl_Terminal::textbgcolor()
                              ░░░░░░░░░░░░░░░░░░░╲░░░░░
                                                  ╲
-                                                  textfgcolor()
+                                                  Fl_Terminal::textfgcolor()
 ·
   \endcode
 
@@ -371,6 +380,16 @@ public:
     CR_TO_LF   = 0x01,     ///< carriage return generates a vertical line-feed (\\r -> \\n)
     LF_TO_CR   = 0x02,     ///< line-feed generates a carriage return (\\n -> \\r)
     LF_TO_CRLF = 0x04      ///< line-feed generates a carriage return line-feed (\\n -> \\r\\n)
+  };
+
+  /**
+    \enum ScrollbarStyle
+    Behavior of scrollbars
+  */
+  enum ScrollbarStyle {
+    SCROLLBAR_OFF  = 0x00, ///< scrollbar always invisible
+    SCROLLBAR_AUTO = 0x01, ///< scrollbar visible if widget resized in a way that hides columns (default)
+    SCROLLBAR_ON   = 0x02  ///< scrollbar always visible
   };
 
   ///////////////////////////////////////////////////////////////
@@ -808,15 +827,38 @@ private:
   ///////////////////////////////////////////////////////////////
 public:
   /**
-    Vertical scrollbar. Public, so that it can be accessed directly.
+    Vertical scrollbar. This is public so it can be accessed directly, e.g.
+
+    - \ref Fl_Scrollbar::value(void) "scrollbar->value(void)" returns the row offset
+      from the bottom of the display, 0 being the bottom (default).
+    - \ref Fl_Scrollbar::value(int) "scrollbar->value(int)" similarly sets the row offset,
+      which should be in the range [0 .. Fl_Scrollbar::maximum()].
+    - \ref Fl_Scrollbar::step(double) "scrollbar->step(double)" sets the smoothness
+      of scrolling, default is 0.25 for 4 steps of motion per column.
+
     \todo Support scrollbar_left/right() - See Fl_Browser_::scrollbar docs
+    \todo Support new ScrollbarStyle
    */
-  Fl_Scrollbar *scrollbar;       // vertical scrollbar (value: rows above disp_chars[])
+  Fl_Scrollbar  *scrollbar;         // vertical scrollbar (value: rows above disp_chars[])
+  /**
+    Horizontal scrollbar. This is public so it can be accessed directly, e.g.
+
+    - \ref Fl_Scrollbar::value(void) "hscrollbar->value(void)" returns the column offset
+      position from the left edge of the display; 0 being the left edge (default).
+    - \ref Fl_Scrollbar::value(int) "hscrollbar->value(int)" similarly sets the column offset,
+      which should be in the range [0 .. Fl_Scrollbar::maximum()].
+    - \ref Fl_Scrollbar::step(double) "hscrollbar->step(double)" sets the smoothness
+      of scrolling, default is 0.25 for 4 steps of motion per column.
+   */
+  Fl_Scrollbar  *hscrollbar;        // horizontal scrollbar
 private:
-  bool          fontsize_defer_; // flag defers font calcs until first draw() (issue 837)
-  int           scrollbar_size_; // local preference for scrollbar size
-  CharStyle     *current_style_; // current font, attrib, color..
-  OutFlags      oflags_;         // output translation flags (CR_TO_LF, LF_TO_CR, LF_TO_CRLF)
+  // Special utf8 symbols
+  const char    *error_char_;       // utf8 string shown for invalid utf8, bad ANSI, etc
+  bool           fontsize_defer_;   // flag defers font calcs until first draw() (issue 837)
+  int            scrollbar_size_;   // local preference for scrollbar size
+  ScrollbarStyle hscrollbar_style_;
+  CharStyle     *current_style_;    // current font, attrib, color..
+  OutFlags       oflags_;           // output translation flags (CR_TO_LF, LF_TO_CR, LF_TO_CRLF)
 
   // A ring buffer is used for the terminal's history (hist) and display (disp) buffer.
   //    See README-Fl_Terminal.txt, section "RING BUFFER DESCRIPTION" for diagrams/info.
@@ -857,9 +899,6 @@ protected:
 private:
   void create_ring(int drows, int dcols, int hrows);
   void init_(int X,int Y,int W,int H,const char*L,int rows,int cols,int hist,bool fontsize_defer);
-protected:
-  int  scrollbar_width(void) const;
-private:
   // Tabstops
   void init_tabstops(int newsize);
   void default_tabstops(void);
@@ -869,6 +908,7 @@ private:
   // Updates
   void update_screen_xywh(void);
   void update_screen(bool font_changed);
+  void set_scrollbar_params(Fl_Scrollbar* scroll, int min, int max);
   void update_scrollbar(void);
   // Resize
   void resize_display_rows(int drows);
@@ -905,9 +945,10 @@ protected:
 private:
   bool is_hist_ring_row(int grow) const;
   bool is_disp_ring_row(int grow) const;
-protected:
+public:
   int  selection_text_len(void) const;
   const char* selection_text(void) const;
+protected:
   void clear_mouse_selection(void);
   bool selection_extend(int X,int Y);
   void select_word(int grow, int gcol);
@@ -959,6 +1000,7 @@ public:
 private:
   void handle_lf(void);
   void handle_cr(void);
+  void handle_esc(void);
   // Printing
   void handle_ctrl(char c);
   bool is_printable(char c);
@@ -977,8 +1019,8 @@ private:
   void utf8_cache_flush(void);
   // API: Character display output
 public:
-  void putchar(const char *text, int len, int drow, int dcol);
-  void putchar(char c, int drow, int dcol);
+  void plot_char(const char *text, int len, int drow, int dcol);
+  void plot_char(char c, int drow, int dcol);
   void print_char(const char *text, int len=-1);
   void print_char(char c);
   // API: String display output
@@ -987,6 +1029,7 @@ public:
   void append(const char *s, int len=-1);
 protected:
   int handle_unknown_char(void);
+  int handle_unknown_char(int drow, int dcol);
   // Drawing
   void draw_row_bg(int grow, int X, int Y) const;
   void draw_row(int grow, int Y) const;
@@ -999,6 +1042,7 @@ public:
   void draw(void) FL_OVERRIDE;
   void resize(int X,int Y,int W,int H) FL_OVERRIDE;
   int  handle(int e) FL_OVERRIDE;
+  const char* text(bool lines_below_cursor=false) const;
 
 protected:
   // Internal short names
@@ -1045,6 +1089,8 @@ public:
   int   scrollbar_size(void) const;
   void  scrollbar_size(int val);
   int   scrollbar_actual_size(void) const;
+  void  hscrollbar_style(ScrollbarStyle val);
+  ScrollbarStyle hscrollbar_style(void) const;
   // API: History
   int   history_rows(void) const;
   void  history_rows(int val);
@@ -1124,9 +1170,16 @@ private:
 public:
   float redraw_rate(void) const;
   void  redraw_rate(float val);
-  // API: Show unknown/unprintable chars
+  // API: Show unknown/invalid utf8/ANSI sequences with an error character (¿).
   bool  show_unknown(void) const;
   void  show_unknown(bool val);
+  /// Sets the "error character" utf8 string shown for invalid utf8
+  /// or bad ANSI sequences if show_unknown() is true. Default: "¿".
+  /// \see show_unknown(bool)
+  void error_char(const char* val) { error_char_ = val; }
+  /// Returns the "error character" utf8 string, which is shown for invalid utf8
+  /// or bad ANSI sequences if show_unknown() is true. \see show_unknown(bool)
+  const char* error_char(void) const { return error_char_; }
   // API: ANSI sequences
   bool  ansi(void) const;
   void  ansi(bool val);
