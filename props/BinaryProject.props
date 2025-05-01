@@ -3,7 +3,6 @@
   <ImportGroup Label="PropertySheets" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <_PropertySheetDisplayName>Directories</_PropertySheetDisplayName>
     <OutDir>$(SolutionDir)bin\$(Configuration)</OutDir>
     <IntDir>$(SolutionDir)out\$(Configuration)-$(Platform)\$(ProjectName)</IntDir>
     <TargetName>$(ProjectName).$(PlatformTarget)</TargetName>
