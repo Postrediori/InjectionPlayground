@@ -1,7 +1,7 @@
 //
 // Button header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2014 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file. If this
@@ -33,7 +33,6 @@
                                          are set to zero.*/
 #define FL_HIDDEN_BUTTON        3   ///< for Forms compatibility
 
-extern FL_EXPORT Fl_Shortcut fl_old_shortcut(const char*);
 
 class Fl_Widget_Tracker;
 
@@ -87,11 +86,11 @@ protected:
   static void key_release_timeout(void*);
   void simulate_key_action();
 
-  void draw() FL_OVERRIDE;
+  void draw() override;
 
 public:
 
-  int handle(int) FL_OVERRIDE;
+  int handle(int) override;
 
   Fl_Button(int X, int Y, int W, int H, const char *L = 0);
 
@@ -158,10 +157,9 @@ public:
 
     \param[in] b down box type
    */
-  void down_box(Fl_Boxtype b) {down_box_ = b;}
+  void down_box(Fl_Boxtype b) {down_box_ = (uchar)b;}
 
-  /// (for backwards compatibility)
-  void shortcut(const char *s) {shortcut(fl_old_shortcut(s));}
+  void shortcut(const char *s);
 
   /// (for backwards compatibility)
   Fl_Color down_color() const {return selection_color();}
@@ -175,7 +173,7 @@ public:
   /// Return true if buttons are rendered as compact buttons.
   /// \return 0 if compact mode is off, 1 if it is on
   /// \see compact(bool)
-  uchar compact() { return compact_; }
+  uchar compact() const { return compact_; }
 };
 
 #endif

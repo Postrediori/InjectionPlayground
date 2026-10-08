@@ -61,13 +61,17 @@
 
   Typing the shortcut() of any of the menu items will cause
   callbacks exactly the same as when you pick the item with the mouse.
+
+  FLTK triggers an `FL_BEFORE_MENU` event for this widget right before
+  displaying the menu. This event provides an opportunity to update menu
+  item states and activation.
  */
 class FL_EXPORT Fl_Menu_Bar : public Fl_Menu_ {
   friend class Fl_Sys_Menu_Bar_Driver;
 protected:
-    void draw() FL_OVERRIDE;
+    void draw() override;
 public:
-    int handle(int) FL_OVERRIDE;
+    int handle(int) override;
   /**
     Creates a new Fl_Menu_Bar widget using the given position,
     size, and label string. The default boxtype is FL_UP_BOX.

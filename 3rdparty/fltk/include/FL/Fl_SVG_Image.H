@@ -24,12 +24,15 @@ struct NSVGimage;
 /** The Fl_SVG_Image class supports loading, caching and drawing of scalable vector graphics (SVG) images.
  The FLTK library performs parsing and rasterization of SVG data using a modified version
  of the \c nanosvg software (https://github.com/memononen/nanosvg).
- The software modification allows the option to change the image ratio
+ The software modification allows the option to change the aspect ratio
  while performing rasterization.
 
  Use Fl_Image::fail() to check if the Fl_SVG_Image failed to load. fail() returns ERR_FILE_ACCESS
  if the file could not be opened or read, and ERR_FORMAT if the SVG format could not be decoded.
  If the image has loaded correctly, w(), h(), and d() should return values greater than zero.
+
+ Member \ref proportional of an Fl_SVG_Image object must be set to \c false to allow the image
+ object to be rasterized with an altered aspect ratio.
 
  Rasterization is not done until the image is first drawn or resize() or normalize() is called. Therefore,
  \ref array is NULL until then. The delayed rasterization ensures an Fl_SVG_Image is always rasterized
@@ -146,7 +149,7 @@ private:
   float average_weight_;
   float svg_scaling_(int W, int H);
   void rasterize_(int W, int H);
-  void cache_size_(int &width, int &height) FL_OVERRIDE;
+  void cache_size_(int &width, int &height) override;
   void init_(const char *name, const unsigned char *filedata, size_t length);
   Fl_SVG_Image(const Fl_SVG_Image *source);
 public:
@@ -157,17 +160,19 @@ public:
   Fl_SVG_Image(const char *sharedname, const char *svg_data);
   Fl_SVG_Image(const char *sharedname, const unsigned char *svg_data, size_t length);
   virtual ~Fl_SVG_Image();
-  Fl_Image *copy(int W, int H) const FL_OVERRIDE;
+  Fl_Image *copy(int W, int H) const override;
   Fl_Image *copy() const {
     return Fl_Image::copy();
   }
   void resize(int width, int height);
-  void desaturate() FL_OVERRIDE;
-  void color_average(Fl_Color c, float i) FL_OVERRIDE;
-  void draw(int X, int Y, int W, int H, int cx = 0, int cy = 0) FL_OVERRIDE;
+  void desaturate() override;
+  void color_average(Fl_Color c, float i) override;
+  void draw(int X, int Y, int W, int H, int cx = 0, int cy = 0) override;
   void draw(int X, int Y) { draw(X, Y, w(), h(), 0, 0); }
-  Fl_SVG_Image *as_svg_image() FL_OVERRIDE { return this; }
-  void normalize() FL_OVERRIDE;
+  Fl_SVG_Image *as_svg_image() override { return this; }
+  const Fl_SVG_Image *as_svg_image() const override { return this; }
+  void normalize() override;
+  void scale(int w, int h, int keep_aspect = 1, int can_expand = 0) override;
 };
 
 #endif // FL_SVG_IMAGE_H

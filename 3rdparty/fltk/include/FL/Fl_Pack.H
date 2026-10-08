@@ -21,6 +21,7 @@
 #define Fl_Pack_H
 
 #include <FL/Fl_Group.H>
+#include <FL/Fl_Rect.H>
 
 /**
   This widget was designed to add the functionality of compressing and
@@ -38,6 +39,12 @@
   is slightly different than in a normal Fl_Group widget: only if the
   resizable() widget is the last widget in the group it is extended to take
   the full available width or height, respectively, of the Fl_Pack group.
+
+  \note Fl_Pack is optimized to use a frame-only (`..._FRAME`) box type.
+    Box types with background graphics (`..._BOX`) generally work, but can be
+    slower witch a large number of children. Not all box types work well
+    with FL_Pack. Avoid irregular graphics like FL_DIAMOND_BOX and background
+    images.
 
   \note You can nest Fl_Pack widgets or put them inside Fl_Scroll widgets
     or inside other group widgets but their behavior can sometimes be
@@ -61,7 +68,8 @@ public:
   };
 
 protected:
-  void draw() FL_OVERRIDE;
+  void draw_filler_(const Fl_Rect& rect);
+  void draw() override;
 
 public:
   Fl_Pack(int X, int Y, int W, int H, const char *L = 0);
@@ -92,7 +100,7 @@ public:
   */
   uchar horizontal() const {return type();}
 
-  void resize(int X, int Y, int W, int H) FL_OVERRIDE;
+  void resize(int X, int Y, int W, int H) override;
   /** Deletes all child widgets with Fl_Group::clear().
   And  sets to NULL the resizable() widget. */
   void clear() { Fl_Group::clear(); resizable(NULL); }

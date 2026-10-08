@@ -2,7 +2,7 @@
 // Fl_Grid widget header for the Fast Light Tool Kit (FLTK).
 //
 // Copyright 2021-2022 by Albrecht Schlosser.
-// Copyright 2022-2025 by Bill Spitzak and others.
+// Copyright 2022-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -177,15 +177,15 @@ public:
 
     Cell(int row, int col) {    // constructor
       Cell_();
-      row_ = row;
-      col_ = col;
+      row_ = (short)row;
+      col_ = (short)col;
     }
 
     Cell(Fl_Widget *w, int row, int col) {  // widget assignment
       Cell_();
       widget_ = w;
-      row_ = row;
-      col_ = col;
+      row_ = (short)row;
+      col_ = (short)col;
     }
 
     /**
@@ -194,14 +194,12 @@ public:
       \todo Fl_Grid's cell destructor should remove the cell from the grid.
             Currently it does nothing!
     */
-    ~Cell() {}
+    ~Cell() = default;
 
     /**
       Returns the next widget cell of the same row of this cell.
     */
-    Cell *next() {
-      return next_;
-    }
+    Cell *next() const { return next_; }
 
     /**
       Sets the \c next pointer of a grid's cell.
@@ -270,7 +268,7 @@ public:
   virtual void layout(int rows, int cols, int margin = -1, int gap = -1);
   virtual void layout();
   virtual void clear_layout();
-  virtual void resize(int X, int Y, int W, int H) FL_OVERRIDE;
+  virtual void resize(int X, int Y, int W, int H) override;
 
   short rows() const { return rows_; }
   short cols() const { return cols_; }
@@ -303,8 +301,8 @@ public:
   }
 
 protected:
-  virtual void draw() FL_OVERRIDE;
-  void on_remove(int) FL_OVERRIDE;
+  virtual void draw() override;
+  void on_remove(int) override;
   virtual void draw_grid();           // draw grid lines for debugging
 
 public:

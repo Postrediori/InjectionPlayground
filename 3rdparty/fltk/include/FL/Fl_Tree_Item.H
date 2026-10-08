@@ -93,13 +93,8 @@ protected:
   void _Init(const Fl_Tree_Prefs &prefs, Fl_Tree *tree);
   void show_widgets();
   void hide_widgets();
-#if FL_ABI_VERSION >= 10403
   virtual void draw_vertical_connector(int x, int y1, int y2, const Fl_Tree_Prefs &prefs);
   virtual void draw_horizontal_connector(int x1, int x2, int y, const Fl_Tree_Prefs &prefs);
-#else
-  void draw_vertical_connector(int x, int y1, int y2, const Fl_Tree_Prefs &prefs);
-  void draw_horizontal_connector(int x1, int x2, int y, const Fl_Tree_Prefs &prefs);
-#endif
   void recalc_tree();
   int calc_item_height(const Fl_Tree_Prefs &prefs) const;
   Fl_Color drawfgcolor() const;
@@ -354,7 +349,7 @@ public:
   }
   /// See if the item is selected.
   char is_selected() const {
-    return(is_flag(SELECTED));
+    return (char)is_flag(SELECTED);
   }
   /// Change the item's activation state to the optionally specified 'val'.
   ///
@@ -383,7 +378,7 @@ public:
   }
   /// See if the item is activated.
   char is_activated() const {
-    return(is_flag(ACTIVE));
+    return (char)is_flag(ACTIVE);
   }
   /// See if the item is activated. Alias for is_activated().
   char is_active() const {

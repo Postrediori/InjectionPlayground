@@ -1,7 +1,7 @@
 //
 // Tile header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2023 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file. If this
@@ -26,10 +26,10 @@
 
 class FL_EXPORT Fl_Tile : public Fl_Group {
 public:
-  int handle(int event) FL_OVERRIDE;
+  int handle(int event) override;
   Fl_Tile(int X, int Y, int W, int H, const char *L=0);
-  ~Fl_Tile() FL_OVERRIDE;
-  void resize(int X, int Y, int W, int H) FL_OVERRIDE;
+  ~Fl_Tile() override;
+  void resize(int X, int Y, int W, int H) override;
   virtual void move_intersection(int oldx, int oldy, int newx, int newy);
   virtual void drag_intersection(int oldx, int oldy, int newx, int newy);
   FL_DEPRECATED("since 1.4.0 - use move_intersection(p) instead",
@@ -47,7 +47,7 @@ protected:
     \see Fl_Tile::set_cursor(int)
   */
 
-  Fl_Cursor cursor(int n) {
+  Fl_Cursor cursor(int n) const {
     return cursors_[n];
   }
 
@@ -67,9 +67,9 @@ protected:
   void request_grow_t(int old_t, int &new_t, Fl_Rect *final_size);
   void request_grow_b(int old_b, int &new_b, Fl_Rect *final_size);
 
-  int on_insert(Fl_Widget*, int) FL_OVERRIDE;
-  int on_move(int, int) FL_OVERRIDE;
-  void on_remove(int) FL_OVERRIDE;
+  int on_insert(Fl_Widget*, int) override;
+  int on_move(int, int) override;
+  void on_remove(int) override;
 };
 
 #endif

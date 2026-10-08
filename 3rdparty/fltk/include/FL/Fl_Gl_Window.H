@@ -1,7 +1,7 @@
 //
 // OpenGL header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2023 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -73,17 +73,17 @@ class FL_EXPORT Fl_Gl_Window : public Fl_Window {
   static int gl_plugin_linkage();
 protected:
   void draw_begin();
-  void draw() FL_OVERRIDE;
+  void draw() override;
   void draw_end();
 
 public:
-  void show() FL_OVERRIDE;
+  void show() override;
   /** Same as Fl_Window::show(int a, char **b) */
   void show(int a, char **b) {Fl_Window::show(a,b);}
-  void flush() FL_OVERRIDE;
-  void hide() FL_OVERRIDE;
-  void resize(int,int,int,int) FL_OVERRIDE;
-  int handle(int) FL_OVERRIDE;
+  void flush() override;
+  void hide() override;
+  void resize(int,int,int,int) override;
+  int handle(int) override;
 
   /**
     Is turned off when FLTK creates a new context for this window or
@@ -134,7 +134,7 @@ public:
    \see Fl_Gl_Window::mode(const int *a) */
   static int can_do(const int *m) {return can_do(0, m);}
   /**  Returns non-zero if the hardware supports the current OpenGL mode. */
-  int can_do() {return can_do(mode_,alist);}
+  int can_do() const { return can_do(mode_,alist); }
   /** Returns the current OpenGL capabilities of the window.
    Don't use this if capabilities were set through Fl_Gl_Window::mode(const int *a).
    */
@@ -150,7 +150,8 @@ public:
    - \c FL_DOUBLE - double buffered
    - \c FL_ACCUM - accumulation buffer
    - \c FL_ALPHA - alpha channel in color
-   - \c FL_DEPTH - depth buffer
+   - \c FL_DEPTH - any depth buffer (or set FL_DEPTH32 for at least 32 bits)
+   - \c FL_DEPTH32 - depth buffer with at least 32 bits
    - \c FL_STENCIL - stencil buffer
    - \c FL_MULTISAMPLE - multisample antialiasing
    - \c FL_OPENGL3 - use OpenGL version 3.0 or more.
@@ -213,8 +214,8 @@ public:
   void make_overlay_current();
 
   // Note: Doxygen docs in Fl_Widget.H to avoid redundancy.
-  Fl_Gl_Window* as_gl_window() FL_OVERRIDE { return this; }
-  Fl_Gl_Window const* as_gl_window() const FL_OVERRIDE { return this; }
+  Fl_Gl_Window* as_gl_window() override { return this; }
+  Fl_Gl_Window const* as_gl_window() const override { return this; }
 
   float pixels_per_unit();
   /** Gives the window width in OpenGL pixels.

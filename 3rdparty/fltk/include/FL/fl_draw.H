@@ -1,7 +1,7 @@
 //
 // Portable drawing function header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2023 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -86,17 +86,6 @@ inline Fl_Color fl_color() {
   \param[in] x,y,w,h position and size
 */
 inline void fl_push_clip(int x, int y, int w, int h) {
-  fl_graphics_driver->push_clip(x, y, w, h);
-}
-/**
-  Intersect the current clip region with a rectangle and push this
-  new region onto the stack (deprecated).
-  \param[in] x,y,w,h position and size
-  \deprecated
-    Please use fl_push_clip(int x, int y, int w, int h) instead.
-    fl_clip(int, int, int, int) will be removed in FLTK 1.5.
-*/
-inline void fl_clip(int x, int y, int w, int h) {
   fl_graphics_driver->push_clip(x, y, w, h);
 }
 /**
@@ -240,6 +229,16 @@ inline void fl_point(int x, int y) {
     array results in a solid line. Odd array sizes are not supported
     and result in undefined behavior.
 
+  In scaled mode, horizontal and vertical lines are drawn with different line
+  widths, depending on the position of the line on screen, to adapt for gaps
+  when drawing adjacent lines. Setting \c FL_UNIFORM_WIDTH will make all lines
+  the same width, regardless of their position. This improves line drawings,
+  but may produce small gaps when drawing gradients or filling areas.
+
+  \note When changing the line style inside a `draw()` method, make sure to
+    reset the line styles by calling \c fl_line_style(0) at the end of a
+    drawing routine or FLTK frame and box drawing will fail.
+
   \note Because of how line styles are implemented on Win32 systems,
     you \e must set the line style \e after setting the drawing
     color. If you set the color after the line style you will lose
@@ -271,7 +270,9 @@ enum {
 
   FL_JOIN_MITER = 0x1000, ///< join style: line join extends to a point
   FL_JOIN_ROUND = 0x2000, ///< join style: line join is rounded
-  FL_JOIN_BEVEL = 0x3000  ///< join style: line join is tidied
+  FL_JOIN_BEVEL = 0x3000, ///< join style: line join is tidied
+
+  FL_UNIFORM_WIDTH = 0x10000 ///< use uniform line width, even in scaled contexts
 };
 
 /**
@@ -776,10 +777,19 @@ inline void fl_transformed_vertex(double xf, double yf) {
 }
 
 /** Copy a rectangular area of the given offscreen buffer into the current drawing destination.
-  \param x,y        position where to draw the copied rectangle
-  \param w,h        size of the copied rectangle
+ This function is typically used when part of the GUI is drawn in an offscreen buffer created by
+ \ref fl_create_offscreen and copied, possibly in part, to the screen. A key condition for this to work independently
+ of the screen scaling and resolution is to call \ref fl_create_offscreen when the destination window
+ of the offscreen graphics is show()'n and current. Another condition is to resize the offscreen
+ when the display containing this window is rescaled. This can be done calling \ref fl_rescale_offscreen
+ which resizes the offscreen while preserving its graphical content. Another approach is to
+ delete and re-create the offscreen, and redraw its content. FLTK test program offscreen
+ gives an example of proper use of these functions.
+  \param x,y        position where to draw the copied rectangle in destination window
+  \param w,h        size of the copied rectangle in FLTK units
   \param pixmap     offscreen buffer containing the rectangle to copy
   \param srcx,srcy  origin in offscreen buffer of rectangle to copy
+ \see fl_create_offscreen, fl_rescale_offscreen.
 */
 inline void fl_copy_offscreen(int x, int y, int w, int h, Fl_Offscreen pixmap, int srcx, int srcy) {
   fl_graphics_driver->copy_offscreen(x, y, w, h, pixmap, srcx, srcy);
@@ -823,6 +833,9 @@ inline Fl_Fontsize fl_size() {
 /**
   Return the recommended minimum line spacing for the current font.
   You can also use the value of \p size passed to fl_font().
+
+  \see fl_font(Fl_Font face, Fl_Fontsize fsize) to load the current font
+    before this method is called.
 */
 inline int fl_height() {
   return fl_graphics_driver->height();
@@ -831,25 +844,50 @@ FL_EXPORT int fl_height(int font, int size);
 /**
   Return the recommended distance above the bottom of a fl_height() tall
   box to draw the text at so it looks centered vertically in that box.
+
+  \see fl_font(Fl_Font face, Fl_Fontsize fsize) to load the current font
+    before this method is called.
 */
 inline int fl_descent() {
   return fl_graphics_driver->descent();
 }
 /** Return the typographical width of a nul-terminated string
-    using the current font face and size.
+  using the current font face and size.
+
+  \see fl_font(Fl_Font face, Fl_Fontsize fsize) to load the current font
+    before this method is called.
 */
 FL_EXPORT double fl_width(const char *txt);
 
-/** Return the typographical width of a sequence of \p n characters
-    using the current font face and size.
+/** Return the typographical width of a sequence of \p n bytes of text
+  in UTF-8 encoding, using the current font face and size.
+
+  \p n must be chosen such that only complete UTF-8 characters are included
+  in the given text \p txt. Otherwise the result is undefined.
+
+  \param[in] txt The UTF-8 encoded text to be measured.
+  \param[in] n   Length of the string in \p bytes.
+
+  \see fl_font(Fl_Font face, Fl_Fontsize fsize) to load the current font
+    before this method is called.
 */
 inline double fl_width(const char *txt, int n) {
   return fl_graphics_driver->width(txt, n);
 }
 /** Return the typographical width of a single character
-    using the current font face and size.
+  using the current font face and size.
 
-  \note If a valid fl_gc is NOT found then it uses the first window gc,
+  \param[in] c The Unicode code point of the character to be measured.
+
+  \see fl_font(Fl_Font face, Fl_Fontsize fsize) to load the current font
+    before this method is called.
+
+  Example:
+  \code
+    auto width = fl_width(0x20ac);  // measures the width of the `€` sign.
+  \endcode
+
+  \internal If a valid fl_gc is NOT found then it uses the first window gc,
   or the screen gc if no fltk window is available when called.
 */
 inline double fl_width(unsigned int c) {
@@ -863,6 +901,7 @@ inline double fl_width(unsigned int c) {
   such that a bounding box that exactly fits around the text could be drawn with
   fl_rect(x+dx, y+dy, wo, ho). Note the dx, dy values hold the offset of the first
   "colored in" pixel of the string, from the draw origin.
+  dx and dy can be negative.
 
   Note the desired font and font size must be set with fl_font() before calling
   this function.
@@ -875,18 +914,30 @@ inline double fl_width(unsigned int c) {
   Example use:
   \code
     int dx,dy,W,H;
-    fl_font(FL_HELVETICA, 12);                   // set font face+size first
+    fl_font(FL_HELVETICA, 12);                   // set font face and size first
     fl_text_extents("Some text", dx, dy, W, H);  // get width and height of string
     printf("text's width=%d, height=%d\n", W, H);
   \endcode
+
+  \param[in]  t     text to be measured
+  \param[out] dx,dy offsets from x,y position of text (see description)
+  \param[out] w,h   width and height of bounding box
 */
-FL_EXPORT void fl_text_extents(const char *, int &dx, int &dy, int &w, int &h);
+FL_EXPORT void fl_text_extents(const char *t, int &dx, int &dy, int &w, int &h);
 
-/** Determine the minimum pixel dimensions of a sequence of \p n characters
-    (bytes) using the current fl_font().
+/** Determine the minimum pixel dimensions of a sequence of \p n bytes of
+  text using the current font face and size.
 
-  \note The string length is measured in bytes, not (UTF-8) characters.
-  \see fl_text_extents(const char*, int& dx, int& dy, int& w, int& h)
+  This is the same as fl_text_extents(const char* t, int& dx, int& dy, int& w, int& h)
+  except that the string doesn't need to be nul-terminated. The length in bytes is
+  given in the second parameter \p n.
+
+  \param[in]  t     text to be measured
+  \param[in]  n     length of text in bytes
+  \param[out] dx,dy offsets from x,y position of text (see description)
+  \param[out] w,h   width and height of bounding box
+
+  \see fl_text_extents(const char* t, int& dx, int& dy, int& w, int& h)
 */
 inline void fl_text_extents(const char *t, int n, int &dx, int &dy, int &w, int &h) {
   fl_graphics_driver->text_extents(t, n, dx, dy, w, h);
@@ -1209,9 +1260,11 @@ FL_EXPORT void fl_set_spot(int font, int size, int X, int Y, int W, int H, Fl_Wi
 FL_EXPORT void fl_reset_spot(void);
 
 
-// XForms symbols:
+// Symbols (originally from XForms):
 FL_EXPORT int fl_draw_symbol(const char *label, int x, int y, int w, int h, Fl_Color);
-FL_EXPORT int fl_add_symbol(const char *name, void (*drawit)(Fl_Color), int scalable);
+FL_EXPORT int fl_add_symbol(const char *name, void (*drawit)(Fl_Color c), int scalable);
+FL_EXPORT int fl_add_symbol(const char *name, void (*draw_in_rect)(int x, int y, int w, int h, Fl_Color c), int scalable);
+FL_EXPORT int fl_remove_symbol(const char *name);
 /** @} */
 
 #endif

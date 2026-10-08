@@ -1,7 +1,7 @@
 //
 // Header file for Fl_Text_Display class.
 //
-// Copyright 2001-2023 by Bill Spitzak and others.
+// Copyright 2001-2026 by Bill Spitzak and others.
 // Original code Copyright Mark Edel.  Permission to distribute under
 // the LGPL for the FLTK library granted by Mark Edel.
 //
@@ -86,7 +86,7 @@ public:
     NORMAL_CURSOR,    /**< I-beam */
     CARET_CURSOR,     /**< caret under the text */
     DIM_CURSOR,       /**< dim I-beam */
-    BLOCK_CURSOR,     /**< unfille box under the current character */
+    BLOCK_CURSOR,     /**< unfilled box under the current character */
     HEAVY_CURSOR,     /**< thick I-beam */
     SIMPLE_CURSOR    /**< as cursor as Fl_Input cursor */
   };
@@ -167,7 +167,7 @@ public:
   Fl_Text_Display(int X, int Y, int W, int H, const char *l = 0);
   ~Fl_Text_Display();
 
-  int handle(int e) FL_OVERRIDE;
+  int handle(int e) override;
 
   void buffer(Fl_Text_Buffer* buf);
 
@@ -257,7 +257,8 @@ public:
    \deprecated Use scrollbar_size() instead.
     \todo This method should eventually be removed.
   */
-  int scrollbar_width() const {
+  FL_DEPRECATED("since 1.4.0 - use scrollbar_size() instead",
+  int scrollbar_width() const ) {
       return scrollbar_width_ ? scrollbar_width_ : Fl::scrollbar_size();
   }
 
@@ -266,7 +267,8 @@ public:
    \deprecated Use scrollbar_size() instead.
     \todo This method should eventually be removed
   */
-  void scrollbar_width(int width) {
+  FL_DEPRECATED("since 1.4.0 - use scrollbar_size() instead",
+  void scrollbar_width(int width) ) {
       Fl::scrollbar_size(width);
       scrollbar_width_ = 0;
   }
@@ -434,7 +436,7 @@ public:
 
   virtual void recalc_display();
   virtual void display_needs_recalc();
-  void resize(int X, int Y, int W, int H) FL_OVERRIDE;
+  void resize(int X, int Y, int W, int H) override;
 
   /**
    Convert an x pixel position into a column number.
@@ -472,7 +474,7 @@ protected:
   // Anything with "vline" indicates thats it deals with currently
   // visible lines.
 
-  void draw() FL_OVERRIDE;
+  void draw() override;
   void draw_text(int X, int Y, int W, int H);
   void draw_range(int start, int end);
   void draw_cursor(int, int);
@@ -539,8 +541,8 @@ protected:
   void maintain_absolute_top_line_number(int state);
 public:
   int get_absolute_top_line_number() const;
-  int scroll_row() { return mTopLineNum; }
-  int scroll_col() { return mHorizOffset; }
+  int scroll_row() const { return mTopLineNum; }
+  int scroll_col() const { return mHorizOffset; }
 protected:
   void absolute_top_line_number(int oldFirstChar);
   int maintaining_absolute_top_line_number() const;

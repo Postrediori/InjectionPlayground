@@ -1,7 +1,7 @@
 //
 // Widget header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2024 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -119,7 +119,7 @@ class FL_EXPORT Fl_Widget {
   Fl_Label label_;
   unsigned int flags_;
   Fl_Color color_;
-  Fl_Color color2_;
+  Fl_Color selection_color_;
   uchar type_;
   uchar damage_;
   uchar box_;
@@ -288,6 +288,16 @@ public:
    */
   virtual int handle(int event);
 
+  /**
+   Sends the specified event to the widget.
+   This is a wrapper for handle(), used by groups to send events to child
+   widgets. If the target is a subwindow, `send` updates mouse coordinates
+   and does some additional event processing before calling handle().
+   \param[in] event the kind of event to send
+   \return the return value of handle(event)
+   */
+  int send(int event);
+
   /** Returns whether the current label was assigned with copy_label().
 
       This can be useful for temporarily overwriting the widget's label
@@ -347,6 +357,8 @@ public:
       Returns the widget type value, which gives some information about the derived widget class
       to which the object belongs. Noticeably, the condition <tt>type() >= FL_WINDOW</tt> indicates
       a widget is an Fl_Window or derived object.
+
+      \note Known values for type_ are listed at the top of src/Fl_Widget.cxx .
    */
   uchar type() const {return type_;}
 
@@ -446,7 +458,7 @@ public:
       \param[in] new_box the new box type
       \see box(), Fl_Boxtype
    */
-  void box(Fl_Boxtype new_box) {box_ = new_box;}
+  void box(Fl_Boxtype new_box) {box_ = (uchar)new_box;}
 
   /** Gets the background color of the widget.
       \return current background color
@@ -470,7 +482,7 @@ public:
       \return the current selection color
       \see selection_color(Fl_Color), color(Fl_Color, Fl_Color)
    */
-  Fl_Color selection_color() const {return color2_;}
+  Fl_Color selection_color() const {return selection_color_;}
 
   /** Sets the selection color.
       The selection color is defined for Forms compatibility and is usually
@@ -480,7 +492,7 @@ public:
       \param[in] a the new selection color
       \see selection_color(), color(Fl_Color, Fl_Color)
    */
-  void selection_color(Fl_Color a) {color2_ = a;}
+  void selection_color(Fl_Color a) {selection_color_ = a;}
 
   /** Sets the background and selection color of the widget.
 
@@ -489,7 +501,7 @@ public:
       \param[in] sel selection color
       \see color(unsigned), selection_color(unsigned)
    */
-  void color(Fl_Color bg, Fl_Color sel) {color_=bg; color2_=sel;}
+  void color(Fl_Color bg, Fl_Color sel) {color_ = bg; selection_color_ = sel;}
 
   /** Gets the current label text.
       \return a pointer to the current label text
@@ -525,7 +537,7 @@ public:
   /** Shortcut to set the label text and type in one call.
       \see label(const char *), labeltype(Fl_Labeltype)
    */
-  void label(Fl_Labeltype a, const char* b) {label_.type = a; label_.value = b;}
+  void label(Fl_Labeltype a, const char* b) {label_.type = (uchar)a; label_.value = b;}
 
   /** Gets the label type.
       \return the current label type.
@@ -541,7 +553,7 @@ public:
       \param[in] a new label type
       \see Fl_Labeltype
    */
-  void labeltype(Fl_Labeltype a) {label_.type = a;}
+  void labeltype(Fl_Labeltype a) {label_.type = (uchar)a;}
 
   /** Gets the label color.
       The default color is FL_FOREGROUND_COLOR.
@@ -1246,16 +1258,6 @@ public:
   /** Returns non zero if MAC_USE_ACCENTS_MENU flag is set, 0 otherwise.
    */
   int use_accents_menu() { return flags() & MAC_USE_ACCENTS_MENU; }
-
-  /** For back compatibility only.
-      \deprecated Use selection_color() instead.
-  */
-  Fl_Color color2() const {return (Fl_Color)color2_;}
-
-  /** For back compatibility only.
-      \deprecated Use selection_color(unsigned) instead.
-  */
-  void color2(unsigned a) {color2_ = a;}
 
   /** Sets whether the widget's label uses '&' to indicate shortcuts.
    By default, all objects of classes Fl_Menu_ (and derivatives), Fl_Button (and derivatives),

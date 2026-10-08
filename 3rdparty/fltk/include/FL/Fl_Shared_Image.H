@@ -1,7 +1,7 @@
 //
 // Shared image header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2024 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -86,7 +86,7 @@ typedef Fl_Image *(*Fl_Shared_Handler)(const char *name,
   A refcount is used to determine if a released image is to be destroyed
   with delete.
 
-  \see fl_register_image()
+  \see fl_register_images()
   \see Fl_Shared_Image::get()
   \see Fl_Shared_Image::find()
   \see Fl_Shared_Image::release()
@@ -124,17 +124,36 @@ protected:
   Fl_Shared_Image *copy_(int W, int H) const;
 
 public:
+
+  /**
+   Custom deleter for std::unique_ptr<>.
+   Fl_Shared_Image does not follow the standard new/delete memory lifecycle.
+   To implement RAII, use std::unique_ptr with this custom deleter to ensure
+   proper release of the image resource.
+   \code{.cpp}
+      std::unique_ptr<Fl_Shared_Image, Fl_Shared_Image::Deleter> img;
+      img = Fl_Shared_Image::get("image.png");
+      // image will be automatically released when 'img' goes out of scope
+   \endcode
+  */
+  class Deleter {
+    public:
+      void operator()(Fl_Shared_Image* img) const {
+        if (img) img->release();
+      }
+  };
+
 #ifdef SHIM_DEBUG
   static void print_pool();
 #endif
 
   /** Returns the filename of the shared image */
-  const char    *name() { return name_; }
+  const char    *name() const { return name_; }
 
   /** Returns the number of references of this shared image.
     When reference is below 1, the image is deleted.
   */
-  int           refcount() { return refcount_; }
+  int           refcount() const { return refcount_; }
 
   /** Returns whether this is an original image.
     Images loaded from a file or from memory are marked \p original as
@@ -143,24 +162,24 @@ public:
     \note This is useful for debugging (rarely used in user code).
     \since FLTK 1.4.0
   */
-  int original() { return original_; }
+  int original() const { return original_; }
 
-  void  release() FL_OVERRIDE;
+  void  release() override;
   virtual void  reload();
 
-  Fl_Shared_Image *as_shared_image() FL_OVERRIDE {
+  Fl_Shared_Image *as_shared_image() override {
     return this;
   }
 
-  Fl_Image *copy(int W, int H) const FL_OVERRIDE;
+  Fl_Image *copy(int W, int H) const override;
   Fl_Image *copy() const;
   Fl_Image *copy();
 
-  void color_average(Fl_Color c, float i) FL_OVERRIDE;
-  void desaturate() FL_OVERRIDE;
-  void draw(int X, int Y, int W, int H, int cx = 0, int cy = 0) FL_OVERRIDE;
+  void color_average(Fl_Color c, float i) override;
+  void desaturate() override;
+  void draw(int X, int Y, int W, int H, int cx = 0, int cy = 0) override;
   void draw(int X, int Y) { draw(X, Y, w(), h(), 0, 0); }
-  void uncache() FL_OVERRIDE;
+  void uncache() override;
 
   static Fl_Shared_Image *find(const char *name, int W = 0, int H = 0);
   static Fl_Shared_Image *get(const char *name, int W = 0, int H = 0);

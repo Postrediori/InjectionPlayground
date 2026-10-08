@@ -21,6 +21,7 @@
 #include <FL/Fl_Image.H>
 #include <FL/Fl_Multi_Label.H>
 #include <FL/platform_types.h> // for FL_COMMAND and FL_CONTROL
+#include <FL/fl_draw.H>
 
 // doxygen needs the following line to enable e.g. ::FL_MENU_TOGGLE to link to the enums
 /// @file
@@ -34,11 +35,12 @@ enum { // values for flags:
   FL_SUBMENU_POINTER = 0x20,       ///< Indicates user_data() is a pointer to another menu array
   FL_SUBMENU         = 0x40,       ///< Item is a submenu to other items
   FL_MENU_DIVIDER    = 0x80,       ///< Creates divider line below this item. Also ends a group of radio buttons
-  FL_MENU_HORIZONTAL = 0x100       ///< ??? -- reserved, internal (do not use)
-  ///< Note: \b ALL other bits in \p flags are reserved: do not use them for your own purposes!
+  FL_MENU_HORIZONTAL = 0x100,      ///< reserved, do not use
+  FL_MENU_CHATTY     = 0x200,      ///< Menu Item receives additional callbacks
+  FL_MENU_HEADLINE   = 0x400,      ///< Mark menu item as a headline
+  ///<
+  ///< Note: All other bits in `flags` are reserved: do not use them for your own purposes!
 };
-
-extern FL_EXPORT Fl_Shortcut fl_old_shortcut(const char*);
 
 class Fl_Menu_;
 
@@ -67,7 +69,8 @@ class Fl_Menu_;
    FL_SUBMENU_POINTER = 0x20,       // Indicates user_data() is a pointer to another menu array
    FL_SUBMENU         = 0x40,       // This item is a submenu to other items
    FL_MENU_DIVIDER    = 0x80,       // Creates divider line below this item. Also ends a group of radio buttons.
-   FL_MENU_HORIZONTAL = 0x100       // ??? -- reserved, internal (do not use)
+   FL_MENU_HORIZONTAL = 0x100       // reserved, do not use
+   FL_MENU_CHATTY     = 0x200       ///< Menu Item receives additional callbacks
   };
   \endcode
 
@@ -120,6 +123,16 @@ class Fl_Menu_;
     variants copies the entire menu to internal storage. Using the
     memory of a static menu array after that would access unused (but not
     released) memory and thus have no effect.
+
+  When a menu item is selected by the user and a callback is set, the callback
+  will be called with FL_REASON_SELECTED. The Fl_Widget pointer is set to the
+  widget that opened the menu, a copy of the menu item's user data. If no menu
+  item callback is set, the callback of the managing widget is called instead.
+
+  If the FL_MENU_CHATTY flag is set, the menu item callback may be called for
+  additional reasons. When a menu item is highlighted, the callback is called
+  with FL_REASON_GOT_FOCUS. If it is no longer highlighted,
+  FL_REASON_LOST_FOCUS is sent.
 */
 struct FL_EXPORT Fl_Menu_Item {
   const char *text;         ///< menu item text, returned by label()
@@ -206,7 +219,7 @@ struct FL_EXPORT Fl_Menu_Item {
     \see const char* Fl_Menu_Item::label() const
   */
   void label(Fl_Labeltype a, const char* b) {
-    labeltype_ = a;
+    labeltype_ = (uchar)a;
     text = b;
   }
 
@@ -262,7 +275,7 @@ struct FL_EXPORT Fl_Menu_Item {
     the label() pointer as another form of data such as a bitmap.
     The value FL_NORMAL_LABEL prints the label as text.
   */
-  void labeltype(Fl_Labeltype a) {labeltype_ = a;}
+  void labeltype(Fl_Labeltype a) {labeltype_ = (uchar)a;}
 
   /**
     Gets the menu item's label color.
@@ -426,7 +439,9 @@ struct FL_EXPORT Fl_Menu_Item {
   /** Turns the check or radio item "off" for the menu item. */
   void clear() {flags &= ~FL_MENU_VALUE;}
 
-  void setonly(Fl_Menu_Item const* first = NULL);
+  FL_DEPRECATED("since 1.3 - use setonly(Fl_Menu_Item const* first) instead",
+  void setonly());
+  void setonly(Fl_Menu_Item const* first);
 
   /** Gets the visibility of an item. */
   int visible() const {return !(flags&FL_MENU_INVISIBLE);}
@@ -447,8 +462,28 @@ struct FL_EXPORT Fl_Menu_Item {
     the menu item to appear grayed-out.
   */
   void deactivate() {flags |= FL_MENU_INACTIVE;}
+
   /** Returns non 0 if FL_INACTIVE and FL_INVISIBLE are cleared, 0 otherwise. */
   int activevisible() const {return !(flags & (FL_MENU_INACTIVE|FL_MENU_INVISIBLE));}
+
+  /** Returns non-0 if the menu item can be selected.
+   Return 0 if the menu is hidden, inactive, or a headline.
+   */
+  int selectable() const {return !(flags & (FL_MENU_INACTIVE|FL_MENU_INVISIBLE|FL_MENU_HEADLINE));}
+
+  /**
+   Set menu item as a headline.
+   A menu item can be designated as a headline. Headline items  are not selectable,
+   but they are also not grayed out. To visually distinguish them, add
+   indentation and apply bold or italic styling.
+   */
+  void headline(bool yes) {
+    if (yes) flags |= FL_MENU_HEADLINE; else flags &= ~FL_MENU_HEADLINE;
+  }
+  /**
+   Return non 0 if this menu item is used as a headline.
+   */
+  int headline() const { return (flags & FL_MENU_HEADLINE); }
 
   // compatibility for FLUID so it can set the image of a menu item...
 
@@ -490,14 +525,18 @@ struct FL_EXPORT Fl_Menu_Item {
     The callback is called with the stored user_data() as its second argument.
     You must first check that callback() is non-zero before calling this.
   */
-  void do_callback(Fl_Widget* o) const {Fl::callback_reason_=FL_REASON_SELECTED; callback_(o, user_data_);}
+  void do_callback(Fl_Widget* o, Fl_Callback_Reason reason=FL_REASON_UNKNOWN) const {
+    Fl::callback_reason_ = reason; callback_(o, user_data_);
+  }
 
   /**
     Calls the Fl_Menu_Item item's callback, and provides the Fl_Widget argument.
     This call overrides the callback's second argument with the given value \p arg.
     You must first check that callback() is non-zero before calling this.
   */
-  void do_callback(Fl_Widget* o,void* arg) const {Fl::callback_reason_=FL_REASON_SELECTED; callback_(o, arg);}
+  void do_callback(Fl_Widget* o, void* arg, Fl_Callback_Reason reason=FL_REASON_UNKNOWN) const {
+    Fl::callback_reason_ = reason; callback_(o, arg);
+  }
 
   /**
     Calls the Fl_Menu_Item item's callback, and provides the Fl_Widget argument.
@@ -506,31 +545,9 @@ struct FL_EXPORT Fl_Menu_Item {
     the callback.
     You must first check that callback() is non-zero before calling this.
   */
-  void do_callback(Fl_Widget* o,long arg) const {Fl::callback_reason_=FL_REASON_SELECTED; callback_(o, (void*)(fl_intptr_t)arg);}
-
-  /** Back compatibility only.
-    \deprecated
-      Please use Fl_Menu_Item::value() instead.
-      This method will be removed in FLTK 1.5.0 or later.
-    \see value()
-  */
-  inline int checked() const {return value();}
-
-  /** Back compatibility only.
-    \deprecated
-      Please use Fl_Menu_Item::set() instead.
-      This method will be removed in FLTK 1.5.0 or later.
-    \see set()
-  */
-  inline void check() {set();}
-
-  /** Back compatibility only.
-    \deprecated
-      Please use Fl_Menu_Item::clear() instead.
-      This method will be removed in FLTK 1.5.0 or later.
-    \see clear()
-  */
-  inline void uncheck() {clear();}
+  void do_callback(Fl_Widget* o, long arg, Fl_Callback_Reason reason=FL_REASON_UNKNOWN) const {
+    Fl::callback_reason_ = reason; callback_(o, (void*)(fl_intptr_t)arg);
+  }
 
   int insert(int,const char*,int,Fl_Callback*,void* =0, int =0);
   int add(const char*, int shortcut, Fl_Callback*, void* =0, int = 0);

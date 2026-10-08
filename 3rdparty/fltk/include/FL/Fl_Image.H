@@ -1,7 +1,7 @@
 //
 // Image header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2022 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -287,9 +287,14 @@ public:
    (upper-left corner) of the image offset by the \c cx
    and \c cy arguments.
 
-   In other words:  <tt>fl_push_clip(X,Y,W,H)</tt> is applied,
-   the image is drawn with its upper-left corner at <tt>X-cx,Y-cy</tt> and its own width and height,
-   <tt>fl_pop_clip</tt><tt>()</tt> is applied.
+   Another way to see what part of the image gets drawn and where, is to consider this alternative writing producing the same output:
+   \verbatim
+   fl_push_clip(X,Y,W,H);
+   this->draw(X - cx, Y - cy);
+   fl_pop_clip();
+   \endverbatim
+   Repeated calls to this member function with the same image
+   but varying <tt>W, H, cx</tt>, or <tt>cy</tt> arguments can be more efficiently processed using the above alternative writing.
    */
   virtual void draw(int X, int Y, int W, int H, int cx=0, int cy=0); // platform dependent
   /**
@@ -331,6 +336,10 @@ class Fl_SVG_Image;
   Images with an even number of channels are assumed to contain
   alpha information, which is used to blend the image with the
   contents of the screen.
+  Functions fl_write_png(const char *filename, Fl_RGB_Image *img) and
+  fl_write_jpeg(const char *filename, Fl_RGB_Image *img) allow to save
+  any Fl_RGB_Image object to a PNG or JPEG file, respectively.
+  Both require linking to the \p fltk_images library.
 
   Fl_RGB_Image is defined in
   &lt;FL/Fl_Image.H&gt;, however for compatibility reasons
@@ -354,23 +363,29 @@ private:
   fl_uintptr_t id_;
   fl_uintptr_t mask_;
   int cache_w_, cache_h_; // size of image when cached
+
+  Fl_RGB_Image *copy_scale_down_2h_() const;
+  Fl_RGB_Image *copy_scale_down_2v_() const;
+  Fl_RGB_Image *copy_bilinear_(uint32_t W, uint32_t H) const;
+  Fl_RGB_Image *copy_nearest_neighbor_(int W, int H) const;
+  Fl_RGB_Image *copy_optimize_(int W, int H) const;
 public:
 
   Fl_RGB_Image(const uchar *bits, int W, int H, int D=3, int LD=0);
   Fl_RGB_Image(const uchar *bits, int bits_length, int W, int H, int D, int LD);
   Fl_RGB_Image(const Fl_Pixmap *pxm, Fl_Color bg=FL_GRAY);
-  ~Fl_RGB_Image() FL_OVERRIDE;
-  Fl_Image *copy(int W, int H) const FL_OVERRIDE;
+  ~Fl_RGB_Image() override;
+  Fl_Image *copy(int W, int H) const override;
   Fl_Image *copy() const { return Fl_Image::copy(); }
-  void color_average(Fl_Color c, float i) FL_OVERRIDE;
-  void desaturate() FL_OVERRIDE;
-  void draw(int X, int Y, int W, int H, int cx=0, int cy=0) FL_OVERRIDE;
+  void color_average(Fl_Color c, float i) override;
+  void desaturate() override;
+  void draw(int X, int Y, int W, int H, int cx=0, int cy=0) override;
   void draw(int X, int Y) {draw(X, Y, w(), h(), 0, 0);}
-  void label(Fl_Widget*w) FL_OVERRIDE;
-  void label(Fl_Menu_Item*m) FL_OVERRIDE;
-  void uncache() FL_OVERRIDE;
-  int cache_w() {return cache_w_;}
-  int cache_h() {return cache_h_;}
+  void label(Fl_Widget*w) override;
+  void label(Fl_Menu_Item*m) override;
+  void uncache() override;
+  int cache_w() const { return cache_w_; }
+  int cache_h() const { return cache_h_; }
   /** Sets the maximum allowed image size in bytes when creating an Fl_RGB_Image object.
 
    The image size in bytes of an Fl_RGB_Image object is the value of the product w() * h() * d().
@@ -386,9 +401,12 @@ public:
    \sa  void Fl_RGB_Image::max_size(size_t)
    */
   static size_t max_size() {return max_size_;}
-  /** Returns whether an image is an Fl_SVG_Image or not.
+  /** Returns whether an RGB image is an Fl_SVG_Image or not.
   This virtual method returns a pointer to the Fl_SVG_Image if this object is an instance of Fl_SVG_Image or NULL if not. */
   virtual Fl_SVG_Image *as_svg_image() { return NULL; }
+  /** Returns whether an RGB image is an Fl_SVG_Image or not.
+  This virtual method returns a pointer to the Fl_SVG_Image if this object is an instance of const Fl_SVG_Image or NULL if not. */
+  virtual const Fl_SVG_Image *as_svg_image() const { return NULL; }
   /** Makes sure the object is fully initialized.
    In particular, makes sure member variable \ref array is non-null. */
   virtual void normalize() {}

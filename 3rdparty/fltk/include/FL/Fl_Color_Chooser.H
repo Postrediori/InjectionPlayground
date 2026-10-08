@@ -1,7 +1,7 @@
 //
 // Color chooser header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2019 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -30,16 +30,18 @@
 #include <FL/Fl_Choice.H>
 #include <FL/Fl_Value_Input.H>
 
+#include <string>
+
 #ifndef FL_DOXYGEN
 
 /** For internal use only */
 class FL_EXPORT Flcc_HueBox : public Fl_Widget {
   int px, py;
 protected:
-  void draw() FL_OVERRIDE;
+  void draw() override;
   int handle_key(int);
 public:
-  int handle(int) FL_OVERRIDE;
+  int handle(int) override;
   Flcc_HueBox(int X, int Y, int W, int H) : Fl_Widget(X,Y,W,H) {
   px = py = 0;}
 };
@@ -48,10 +50,10 @@ public:
 class FL_EXPORT Flcc_ValueBox : public Fl_Widget {
   int py;
 protected:
-  void draw() FL_OVERRIDE;
+  void draw() override;
   int handle_key(int);
 public:
-  int handle(int) FL_OVERRIDE;
+  int handle(int) override;
   Flcc_ValueBox(int X, int Y, int W, int H) : Fl_Widget(X,Y,W,H) {
   py = 0;}
 };
@@ -59,7 +61,8 @@ public:
 /** For internal use only */
 class FL_EXPORT Flcc_Value_Input : public Fl_Value_Input {
 public:
-  int format(char*) FL_OVERRIDE;
+  int format(char*) override;
+  std::string format_str() override;
   Flcc_Value_Input(int X, int Y, int W, int H) : Fl_Value_Input(X,Y,W,H) {}
 };
 
@@ -124,13 +127,13 @@ class FL_EXPORT Fl_Color_Chooser : public Fl_Group {
   static void mode_cb(Fl_Widget*, void*);
 public:
 
-  int handle(int e) FL_OVERRIDE;
+  int handle(int e) override;
 
   /**
    Returns which Fl_Color_Chooser variant is currently active
    \return color modes are rgb(0), byte(1), hex(2), or hsv(3)
    */
-  int mode() {return choice.value();}
+  int mode() const { return choice.value(); }
 
   /**
    Set which Fl_Color_Chooser variant is currently active

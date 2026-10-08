@@ -1,7 +1,7 @@
 //
 // Event and other names header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2024 by Bill Spitzak and others.
+// Copyright 1998-2025 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -24,6 +24,10 @@
 #ifndef FL_NAMES_H
 #define FL_NAMES_H
 
+#include <FL/Fl.H>  // for event constants
+#include <string>
+#include <map>
+
 /** \defgroup fl_events Events handling functions
     @{
  */
@@ -43,40 +47,67 @@
   }
   \endcode
  */
-const char * const fl_eventnames[] =
-{
-  "FL_NO_EVENT",
-  "FL_PUSH",
-  "FL_RELEASE",
-  "FL_ENTER",
-  "FL_LEAVE",
-  "FL_DRAG",
-  "FL_FOCUS",
-  "FL_UNFOCUS",
-  "FL_KEYDOWN",
-  "FL_KEYUP",
-  "FL_CLOSE",
-  "FL_MOVE",
-  "FL_SHORTCUT",
-  "FL_DEACTIVATE",
-  "FL_ACTIVATE",
-  "FL_HIDE",
-  "FL_SHOW",
-  "FL_PASTE",
-  "FL_SELECTIONCLEAR",
-  "FL_MOUSEWHEEL",
-  "FL_DND_ENTER",
-  "FL_DND_DRAG",
-  "FL_DND_LEAVE",
-  "FL_DND_RELEASE",
-  "FL_SCREEN_CONFIGURATION_CHANGED",
-  "FL_FULLSCREEN",
-  "FL_ZOOM_GESTURE",
-  "FL_ZOOM_EVENT",
-  "FL_EVENT_28", // not yet defined, just in case it /will/ be defined ...
-  "FL_EVENT_29", // not yet defined, just in case it /will/ be defined ...
-  "FL_EVENT_30"  // not yet defined, just in case it /will/ be defined ...
+static std::map<int, const char*> fl_eventnames = {
+  { FL_NO_EVENT, "FL_NO_EVENT" },
+  { FL_PUSH, "FL_PUSH" },
+  { FL_RELEASE, "FL_RELEASE" },
+  { FL_ENTER, "FL_ENTER" },
+  { FL_LEAVE, "FL_LEAVE" },
+  { FL_DRAG, "FL_DRAG" },
+  { FL_FOCUS, "FL_FOCUS" },
+  { FL_UNFOCUS, "FL_UNFOCUS" },
+  { FL_KEYDOWN, "FL_KEYDOWN" },
+  { FL_KEYUP, "FL_KEYUP" },
+  { FL_CLOSE, "FL_CLOSE" },
+  { FL_MOVE, "FL_MOVE" },
+  { FL_SHORTCUT, "FL_SHORTCUT" },
+  { FL_DEACTIVATE, "FL_DEACTIVATE" },
+  { FL_ACTIVATE, "FL_ACTIVATE" },
+  { FL_HIDE, "FL_HIDE" },
+  { FL_SHOW, "FL_SHOW" },
+  { FL_PASTE, "FL_PASTE" },
+  { FL_SELECTIONCLEAR, "FL_SELECTIONCLEAR" },
+  { FL_MOUSEWHEEL, "FL_MOUSEWHEEL" },
+  { FL_DND_ENTER, "FL_DND_ENTER" },
+  { FL_DND_DRAG, "FL_DND_DRAG" },
+  { FL_DND_LEAVE, "FL_DND_LEAVE" },
+  { FL_DND_RELEASE, "FL_DND_RELEASE" },
+  { FL_SCREEN_CONFIGURATION_CHANGED, "FL_SCREEN_CONFIGURATION_CHANGED" },
+  { FL_FULLSCREEN, "FL_FULLSCREEN" },
+  { FL_ZOOM_GESTURE, "FL_ZOOM_GESTURE" },
+  { FL_ZOOM_EVENT, "FL_ZOOM_EVENT" },
+  { FL_BEFORE_TOOLTIP, "FL_BEFORE_TOOLTIP" },
+  { FL_BEFORE_MENU, "FL_BEFORE_MENU" },
+  { FL_APP_ACTIVATE, "FL_APP_ACTIVATE" },
+  { FL_APP_DEACTIVATE, "FL_APP_DEACTIVATE" },
+  { Fl::Pen::DETECTED, "Fl::Pen::DETECTED" },
+  { Fl::Pen::CHANGED, "Fl::Pen::CHANGED" },
+  { Fl::Pen::IN_RANGE, "Fl::Pen::IN_RANGE" },
+  { Fl::Pen::OUT_OF_RANGE, "Fl::Pen::OUT_OF_RANGE" },
+  { Fl::Pen::ENTER, "Fl::Pen::ENTER" },
+  { Fl::Pen::LEAVE, "Fl::Pen::LEAVE" },
+  { Fl::Pen::TOUCH, "Fl::Pen::TOUCH" },
+  { Fl::Pen::LIFT, "Fl::Pen::LIFT" },
+  { Fl::Pen::HOVER, "Fl::Pen::HOVER" },
+  { Fl::Pen::DRAW, "Fl::Pen::DRAW" },
+  { Fl::Pen::BUTTON_PUSH, "Fl::Pen::BUTTON_PUSH" },
+  { Fl::Pen::BUTTON_RELEASE, "Fl::Pen::BUTTON_RELEASE" }
 };
+
+/**
+ Return the C++ symbol of an Fl_Event as a string.
+ \param[in] event index as an integer
+ \return C++ symbol of event index as a string
+ */
+inline std::string fl_eventname_str(int event) {
+  auto it = fl_eventnames.find(event);
+  if (it == fl_eventnames.end()) {
+    return "FL_EVENT_" + std::to_string(event);
+  } else {
+    return it->second;
+  }
+}
+
 
 /**
   This is an array of font names you can use to convert font numbers into names.
@@ -116,6 +147,20 @@ const char * const fl_fontnames[] =
 };
 
 /**
+  Return the C++ symbol of an Fl_Font as a string.
+  \param[in] font index as an integer
+  \return C++ symbol of font index as a string
+*/
+inline std::string fl_fontname_str(int font) {
+  if ((font < 0) || (font >= FL_ZAPF_DINGBATS)) {
+    return "FL_FONT_" + std::to_string(font);
+  } else {
+    return fl_fontnames[font];
+  }
+}
+
+
+/**
  This is an array of callback reason names you can use to convert callback reasons into names.
 
  The array gets defined inline wherever your '\#include <FL/names.h>' appears.
@@ -140,6 +185,19 @@ const char * const fl_callback_reason_names[] =
   NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
   "FL_REASON_USER", "FL_REASON_USER+1", "FL_REASON_USER+2", "FL_REASON_USER+3",
 };
+
+/**
+  Return the C++ symbol of an Fl_Callback_Reason as a string.
+  \param[in] reason as an integer
+  \return C++ symbol of reason as a string
+*/
+inline std::string fl_callback_reason_str(int reason) {
+  if ((reason < 0) || (reason >= FL_REASON_USER+3) || (fl_callback_reason_names[reason] == nullptr)) {
+    return "FL_REASON_" + std::to_string(reason);
+  } else {
+    return fl_callback_reason_names[reason];
+  }
+}
 
 /** @} */
 

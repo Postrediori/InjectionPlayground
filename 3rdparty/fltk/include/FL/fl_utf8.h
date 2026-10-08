@@ -1,7 +1,10 @@
 /*
- * Author: Jean-Marc Lienher ( http://oksid.ch )
+ * Unicode to UTF-8 conversion functions for the Fast Light Tool Kit (FLTK).
+ *
+ * Original author: Jean-Marc Lienher ( http://oksid.ch )
  * Copyright 2000-2010 by O'ksi'D.
- * Copyright 2016-2021 by Bill Spitzak and others.
+ *
+ * Copyright 2016-2026 by Bill Spitzak and others.
  *
  * This library is free software. Distribution and use rights are outlined in
  * the file "COPYING" which should have been included with this file.  If this
@@ -29,8 +32,8 @@
 
 #include "Fl_Export.H"
 #include "fl_types.h"
-#include <stdio.h>      // FILE *fl_fopen()
-#include <sys/stat.h>   // struct stat
+#include <stdio.h>      /* FILE *fl_fopen() */
+#include <sys/stat.h>   /* struct stat */
 
 #ifdef __cplusplus
 extern "C" {
@@ -43,11 +46,6 @@ extern "C" {
 /* F2: comes from FLTK2 */
 /* OD: comes from OksiD */
 
-/**
-  Return the number of bytes needed to encode the given UCS4 character in UTF-8.
-  \param [in] ucs UCS4 encoded character
-  \return number of bytes required
- */
 FL_EXPORT int fl_utf8bytes(unsigned ucs);
 
 /* OD: returns the byte length of the first UTF-8 char sequence (returns -1 if not valid) */
@@ -94,6 +92,9 @@ FL_EXPORT unsigned fl_utf8froma (char *dst, unsigned dstlen, const char *src, un
 
 /* F2: Returns true if the current O/S locale is UTF-8 */
 FL_EXPORT int fl_utf8locale(void);
+
+/* Test if byte is in the middle of a UTF-8 character */
+FL_EXPORT int fl_utf8_is_continuation(char byte);
 
 /* F2: Examine the first len characters of src, to determine if the input text is UTF-8 or not
  * NOTE: The value returned is not simply boolean - it contains information about the probable
@@ -210,10 +211,17 @@ FL_EXPORT void fl_make_path_for_file( const char *path );
 /* OD: recursively create a path in the file system */
 FL_EXPORT char fl_make_path( const char *path );
 
+FL_EXPORT const char *fl_utf8_next_composed_char(const char *from, const char *end);
+
+FL_EXPORT const char *fl_utf8_previous_composed_char(const char *from, const char *begin);
+
+
+/* Clean UTF-8 string by re-encoding if necessary - see src/fl_utf8.cxx */
+FL_EXPORT const char* fl_utf8_clean(const char* str, int* n);
 
 /** @} */
 
-/*****************************************************************************/
+/* ************************************************************************* */
 
 #ifdef __cplusplus
 }

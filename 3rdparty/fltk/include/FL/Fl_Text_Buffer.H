@@ -1,7 +1,7 @@
 //
 // Header file for Fl_Text_Buffer class.
 //
-// Copyright 2001-2023 by Bill Spitzak and others.
+// Copyright 2001-2026 by Bill Spitzak and others.
 // Original code Copyright Mark Edel.  Permission to distribute under
 // the LGPL for the FLTK library granted by Mark Edel.
 //
@@ -23,6 +23,7 @@
 #define FL_TEXT_BUFFER_H
 
 #include <stdarg.h>     /* va_list */
+#include <string>
 #include "fl_attr.h"    /* Doxygen can't find <FL/fl_attr.h> */
 
 #undef ASSERT_UTF8
@@ -229,6 +230,12 @@ public:
    \return newly allocated text buffer - must be free'd, text is UTF-8
    */
   char* text() const;
+
+  /**
+   \brief Get a copy of the entire contents of the text buffer.
+   \return text as a UTF-8 string
+   */
+  std::string text_str() const;
 
   /**
    Replaces the entire contents of the text buffer.
@@ -442,14 +449,14 @@ public:
   /**
    Gets the selection position.
    */
-  int selection_position(int* start, int* end);
+  int selection_position(int* start, int* end) const;
 
   /**
    Returns the currently selected text.
 
    When you are done with the text, free it using the free() function.
    */
-  char* selection_text();
+  char* selection_text() const;
 
   /**
    Removes the text in the primary selection.
@@ -470,7 +477,7 @@ public:
    Returns a non-zero value if text has been selected in the secondary
    text selection, 0 otherwise.
    */
-  int secondary_selected() { return mSecondary.selected(); }
+  int secondary_selected() const { return mSecondary.selected(); }
 
   /**
    Clears any selection in the secondary text selection object.
@@ -480,14 +487,14 @@ public:
   /**
    Returns the current selection in the secondary text selection object.
    */
-  int secondary_selection_position(int* start, int* end);
+  int secondary_selection_position(int* start, int* end) const;
 
   /**
    Returns the text in the secondary selection.
 
    When you are done with the text, free it using the free() function.
    */
-  char* secondary_selection_text();
+  char* secondary_selection_text() const;
 
   /**
    Removes the text from the buffer corresponding to the secondary text
@@ -509,7 +516,7 @@ public:
   /**
    Returns a non-zero value if text has been highlighted, 0 otherwise.
    */
-  int highlight() { return mHighlight.selected(); }
+  int highlight() const { return mHighlight.selected(); }
 
   /**
    Unhighlights text in the buffer.
@@ -519,14 +526,14 @@ public:
   /**
    Highlights the specified text between \p start and \p end within the buffer.
    */
-  int highlight_position(int* start, int* end);
+  int highlight_position(int* start, int* end) const;
 
   /**
    Returns the highlighted text.
 
    When you are done with the text, free it using the free() function.
    */
-  char* highlight_text();
+  char* highlight_text() const;
 
   /**
    Adds a callback function that is called whenever the text buffer is modified.
@@ -627,7 +634,7 @@ public:
    \param nChars number of bytes that are sent to the display
    \return byte offset in input after all output bytes are sent
    */
-  int skip_displayed_characters(int lineStartPos, int nChars);
+  int skip_displayed_characters(int lineStartPos, int nChars) const;
 
   /**
    Counts the number of newlines between \p startPos and \p endPos in buffer.
@@ -646,7 +653,7 @@ public:
    Finds the first character of the line \p nLines forward from \p startPos
    in the buffer and returns its position.
    */
-  int skip_lines(int startPos, int nLines);
+  int skip_lines(int startPos, int nLines) const;
 
   /**
    Finds and returns the position of the first character of the line \p nLines
@@ -654,7 +661,7 @@ public:
    \p startpos if that is a newline) in the buffer.
    \p nLines == 0 means find the beginning of the line.
    */
-  int rewind_lines(int startPos, int nLines);
+  int rewind_lines(int startPos, int nLines) const;
 
   /**
    Finds the next occurrence of the specified character.
@@ -735,19 +742,11 @@ public:
    */
   const Fl_Text_Selection* highlight_selection() const { return &mHighlight; }
 
-  /**
-   Returns the index of the previous character.
-   \param ix index to the current character
-   */
-  int prev_char(int ix) const;
-  int prev_char_clipped(int ix) const;
+  int prev_char(int pos) const;
+  int prev_char_clipped(int pos) const;
 
-  /**
-   Returns the index of the next character.
-   \param ix index to the current character
-   */
-  int next_char(int ix) const;
-  int next_char_clipped(int ix) const;
+  int next_char(int pos) const;
+  int next_char_clipped(int pos) const;
 
   /**
    Align an index into the buffer to the current or previous UTF-8 boundary.
@@ -829,7 +828,7 @@ protected:
    */
   void reallocate_with_gap(int newGapStart, int newGapLen);
 
-  char* selection_text_(Fl_Text_Selection* sel) const;
+  char* selection_text_(const Fl_Text_Selection* sel) const;
 
   /**
    Removes the text from the buffer corresponding to \p sel.

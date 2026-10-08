@@ -97,7 +97,7 @@ protected:
 
   /** Stores the last window that was made current. See current() const */
   static Fl_Window *current_;
-  void draw() FL_OVERRIDE;
+  void draw() override;
 
 public:
 
@@ -198,7 +198,7 @@ public:
   */
     virtual ~Fl_Window();
 
-  int handle(int) FL_OVERRIDE;
+  int handle(int) override;
 
   /**
     Changes the size and position of the window.  If shown() is true,
@@ -207,7 +207,7 @@ public:
     false, the size and position are used when show() is called.
     See Fl_Group for the effect of resizing on the child widgets.
 
-    You can also call the Fl_Widget methods size(x,y) and position(w,h),
+    You can also call the Fl_Widget methods position(x, y) and size(w, h)
     which are inline wrappers for this virtual function.
 
     A top-level window can not force, but merely suggest a position and
@@ -216,7 +216,7 @@ public:
     dimensions. It is up to the application developer to verify window
     parameters after the resize request.
   */
-  void resize(int X,int Y,int W,int H) FL_OVERRIDE;
+  void resize(int X,int Y,int W,int H) override;
   /** Sets whether or not the window manager border is around the window.
   The default value is true. The macOS platform ignores requests to change the
   border state of a fullscreen or maximized window.
@@ -361,7 +361,7 @@ public:
 
   void size_range(int minw, int minh, int maxw=0, int maxh=0, int dw=0, int dh=0, int aspect=0);
 
-  uchar get_size_range(int *minw, int *minh, int *maxw=NULL, int *maxh=NULL, int *dw=NULL, int *dh=NULL, int *aspect=NULL);
+  uchar get_size_range(int *minw, int *minh, int *maxw=NULL, int *maxh=NULL, int *dw=NULL, int *dh=NULL, int *aspect=NULL) const;
 
   /** See void Fl_Window::label(const char*)   */
   const char* label() const     {return Fl_Widget::label();}
@@ -431,7 +431,8 @@ public:
     ). You can tell if a window is iconified with (w->shown()
     && !w->visible()).
   */
-  int shown() {return flx_ != 0;}
+  int shown() const { return flx_ != 0; }
+
   /**
     Puts the window on the screen. This has the side
     effect of opening the display, if not done before.
@@ -458,12 +459,12 @@ public:
 
     \see Fl_Window::show(int argc, char **argv)
   */
-  void show() FL_OVERRIDE;
+  void show() override;
   /**
     Removes the window from the screen.  If the window is already hidden or
     has not been shown then this does nothing and is harmless.
   */
-  void hide() FL_OVERRIDE;
+  void hide() override;
   /**
     Puts the window on the screen with show() and parses command-line arguments.
 
@@ -505,25 +506,11 @@ public:
     Turns off any side effects of fullscreen()
   */
   void fullscreen_off();
-  /**
-    Turns off any side effects of fullscreen() and does
-    resize(x,y,w,h).
-  */
   void fullscreen_off(int X,int Y,int W,int H);
   /**
     Returns non zero if FULLSCREEN flag is set, 0 otherwise.
   */
   unsigned int fullscreen_active() const { return flags() & FULLSCREEN; }
-  /**
-    Sets which screens should be used when this window is in fullscreen
-    mode. The window will be resized to the top of the screen with index
-    \p top, the bottom of the screen with index \p bottom, etc.
-
-    If this method is never called, or if any argument is < 0, then the
-    window will be resized to fill the screen it is currently on.
-
-    \see void Fl_Window::fullscreen()
-    */
   void fullscreen_screens(int top, int bottom, int left, int right);
 
   void maximize();
@@ -596,8 +583,8 @@ public:
   int decorated_h() const;
 
   // Note: Doxygen docs in Fl_Widget.H to avoid redundancy.
-  Fl_Window* as_window() FL_OVERRIDE { return this; }
-  Fl_Window const* as_window() const FL_OVERRIDE { return this; }
+  Fl_Window* as_window() override { return this; }
+  Fl_Window const* as_window() const override { return this; }
 
   /**
    Return non-null if this is an Fl_Overlay_Window object.
@@ -611,12 +598,12 @@ public:
 
   void shape(const Fl_Image* img);
   void shape(const Fl_Image& b);
-  const Fl_Image *shape();
+  const Fl_Image *shape() const;
   void draw_backdrop();
-  int screen_num();
+  int screen_num() const;
   void screen_num(int screen_num);
   static bool is_a_rescale();
-  fl_uintptr_t os_id();
+  fl_uintptr_t os_id() const;
 
   /**
     Sets a static flag whether the next window should be opened iconified.

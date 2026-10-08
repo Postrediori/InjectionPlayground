@@ -1,7 +1,7 @@
 //
 // Common browser header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2016 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -206,7 +206,7 @@ protected:
   int leftedge() const; // x position after scrollbar & border
   void *find_item(int ypos); // item under mouse
 
-  void draw() FL_OVERRIDE;
+  void draw() override;
   Fl_Browser_(int X,int Y,int W,int H,const char *L=0);
 
 public:
@@ -232,8 +232,8 @@ public:
    */
   Fl_Scrollbar hscrollbar;
 
-  int handle(int event) FL_OVERRIDE;
-  void resize(int X,int Y,int W,int H) FL_OVERRIDE;
+  int handle(int event) override;
+  void resize(int X,int Y,int W,int H) override;
 
   int select(void *item,int val=1,int docallbacks=0);
   int select_only(void *item,int docallbacks=0);
@@ -351,6 +351,7 @@ public:
   int scrollbar_size() const {
       return(scrollbar_size_);
   }
+
   /**
     Sets the pixel size of the scrollbars' troughs to \p newSize, in pixels.
 
@@ -360,7 +361,7 @@ public:
     has a consistent UI, is the default behavior, and is normally
     what you want.
 
-    Only use THIS method if you really need to override the global
+    Only use \b this method if you really need to override the global
     scrollbar size. The need for this should be rare.
 
     Setting \p newSize to the special value of 0 causes the widget to
@@ -373,23 +374,7 @@ public:
   void scrollbar_size(int newSize) {
       scrollbar_size_ = newSize;
   }
-  /**
-    Returns the global value Fl::scrollbar_size().
-   \deprecated Use scrollbar_size() instead.
-    \todo This method should eventually be removed in 1.4+
-  */
-  int scrollbar_width() const {
-      return(Fl::scrollbar_size());
-  }
-  /**
-    Sets the global Fl::scrollbar_size(), and forces this instance of the widget to use it.
-   \deprecated Use scrollbar_size() instead.
-    \todo This method should eventually be removed in 1.4+
-  */
-  void scrollbar_width(int width) {
-      Fl::scrollbar_size(width);
-      scrollbar_size_ = 0;
-  }
+
   /**
     Moves the vertical scrollbar to the righthand side of the list.
     For back compatibility.

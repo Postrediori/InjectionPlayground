@@ -1,7 +1,7 @@
 //
 // Tab header file for the Fast Light Tool Kit (FLTK).
 //
-// Copyright 1998-2023 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -63,7 +63,7 @@ struct Fl_Menu_Item;
   be wrapped inside another Fl_Group and inset by five pixels within this
   group so the contents of the Fl_Scroll widget are kept away from the tabs
   by this amount.
-  <!-- See GitHub issue #1175. -->
+  <!-- See GitHub issue # 1175. -->
 
   The background area behind and to the right of the tabs is
   "transparent", exposing the background detail of the parent. The
@@ -266,9 +266,9 @@ protected:
   void handle_overflow_menu();
   void draw_overflow_menu_button();
 
-  int on_insert(Fl_Widget*, int) FL_OVERRIDE;
-  int on_move(int, int) FL_OVERRIDE;
-  void on_remove(int) FL_OVERRIDE;
+  int on_insert(Fl_Widget*, int) override;
+  int on_move(int, int) override;
+  void on_remove(int) override;
 
   virtual void redraw_tabs();
   virtual int tab_positions();  // allocate and calculate tab positions
@@ -279,19 +279,20 @@ protected:
   virtual int hit_overflow_menu(int event_x, int event_y);
   virtual int hit_tabs_area(int event_x, int event_y);
 
-  void draw() FL_OVERRIDE;
+  void draw() override;
 
 public:
 
   Fl_Tabs(int X, int Y, int W, int H, const char *L = 0);
-  ~Fl_Tabs() FL_OVERRIDE;
+  ~Fl_Tabs() override;
 
-  void resize(int, int, int, int) FL_OVERRIDE;
-  void show() FL_OVERRIDE;
+  void resize(int, int, int, int) override;
+  void show() override;
 
-  int handle(int) FL_OVERRIDE;
+  int handle(int) override;
   Fl_Widget *value();
   int value(Fl_Widget *);
+  int value(int);
 
   /**
     Returns the tab group for the tab the user has currently down-clicked on

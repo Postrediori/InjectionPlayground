@@ -43,7 +43,7 @@ class FL_EXPORT Fl_Wizard : public Fl_Group {
 
 protected:
 
-  void draw() FL_OVERRIDE;
+  void draw() override;
 
 public:
 
@@ -53,6 +53,7 @@ public:
   void prev();
   Fl_Widget *value();
   void value(Fl_Widget *);
+  void value(int);
 };
 
 #endif // !_Fl_Wizard_H_

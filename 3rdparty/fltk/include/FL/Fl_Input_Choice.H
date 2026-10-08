@@ -6,7 +6,7 @@
 //           |______________||____|
 //
 // Copyright 2004 by Greg Ercolano.
-// Copyright 1998-2024 by Bill Spitzak and others.
+// Copyright 1998-2026 by Bill Spitzak and others.
 //
 // This library is free software. Distribution and use rights are outlined in
 // the file "COPYING" which should have been included with this file.  If this
@@ -44,11 +44,11 @@ class FL_EXPORT Fl_Input_Choice : public Fl_Group {
 
   // Private class to handle slightly 'special' behavior of menu button
   class InputMenuButton : public Fl_Menu_Button {
-    void draw() FL_OVERRIDE;
+    void draw() override;
     const Fl_Menu_Item* popup();
   public:
     InputMenuButton(int X, int Y, int W, int H, const char *L=0);
-    int handle(int e) FL_OVERRIDE;
+    int handle(int e) override;
   };
 
   Fl_Input *inp_;
@@ -89,13 +89,13 @@ protected:
   /** See menu_x() for info. */
   virtual int menu_h() const { return h() - Fl::box_dh(box()); }
 
-  void draw() FL_OVERRIDE;
+  void draw() override;
 
 public:
 
   Fl_Input_Choice(int X, int Y, int W, int H, const char *L=0);
 
-  void resize(int X, int Y, int W, int H) FL_OVERRIDE;
+  void resize(int X, int Y, int W, int H) override;
 
   /** Adds an item to the menu.
     When any item is selected, the Fl_Input_Choice callback() is invoked,
@@ -188,12 +188,12 @@ public:
     }
     \endcode
   */
-  Fl_Menu_Button *menubutton() { return menu_; }
+  Fl_Menu_Button* menubutton() const { return menu_; }
 
   /** Returns a pointer to the internal Fl_Input widget.
     This can be used to directly access all of the Fl_Input widget's methods.
   */
-  Fl_Input *input() { return inp_; }
+  Fl_Input* input() const { return inp_; }
 };
 
 #endif // !Fl_Input_Choice_H
